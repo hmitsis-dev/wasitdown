@@ -1,0 +1,121 @@
+{{template "base" .}}
+
+{{define "head-extra"}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": "{{.Incident.Title}}",
+  "startDate": "{{.Incident.StartedAt.Format "2006-01-02T15:04:05Z07:00"}}",
+  {{if .Incident.ResolvedAt}}
+  "endDate": "{{.Incident.ResolvedAt.Format "2006-01-02T15:04:05Z07:00"}}",
+  {{end}}
+  "description": "{{.Description}}",
+  "url": "{{.Canonical}}",
+  "organizer": {
+    "@type": "Organization",
+    "name": "{{.Incident.ProviderName}}"
+  }
+}
+</script>
+{{end}}
+
+{{define "content"}}
+<nav class="text-sm text-gray-500 mb-6 flex items-center gap-1">
+  <a href="/" class="hover:text-brand">Home</a>
+  <span>/</span>
+  <a href="/provider/{{.Incident.ProviderSlug}}" class="hover:text-brand">{{.Incident.ProviderName}}</a>
+  <span>/</span>
+  <span class="text-gray-900">Incident #{{.Incident.ID}}</span>
+</nav>
+
+<div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+  <div class="flex flex-wrap gap-2 mb-4">
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium {{impactBadge .Incident.Impact}}">
+      {{.Incident.Impact}} impact
+    </span>
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200">
+      {{.Incident.ProviderName}}
+    </span>
+    {{if .Incident.IsResolved}}
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+      ✓ Resolved
+    </span>
+    {{else}}
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-orange-50 text-orange-700 border border-orange-200">
+      ⚠ {{.Incident.Status}}
+    </span>
+    {{end}}
+  </div>
+
+  <h1 class="text-2xl font-bold text-gray-900 mb-4">{{.Incident.Title}}</h1>
+
+  <dl class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div>
+      <dt class="text-xs text-gray-500 font-medium uppercase tracking-wide">Started</dt>
+      <dd class="mt-1 text-sm font-semibold text-gray-900">{{formatDateTime .Incident.StartedAt}}</dd>
+    </div>
+    {{if .Incident.ResolvedAt}}
+    <div>
+      <dt class="text-xs text-gray-500 font-medium uppercase tracking-wide">Resolved</dt>
+      <dd class="mt-1 text-sm font-semibold text-gray-900">{{formatDateTime (derefTime .Incident.ResolvedAt)}}</dd>
+    </div>
+    {{end}}
+    {{if .Incident.DurationMinutes}}
+    <div>
+      <dt class="text-xs text-gray-500 font-medium uppercase tracking-wide">Duration</dt>
+      <dd class="mt-1 text-sm font-semibold text-gray-900">{{.Incident.DurationMinutes}} minutes</dd>
+    </div>
+    {{end}}
+    <div>
+      <dt class="text-xs text-gray-500 font-medium uppercase tracking-wide">Date</dt>
+      <dd class="mt-1 text-sm font-semibold">
+        <a href="/date/{{formatDate .Incident.StartedAt}}" class="text-brand hover:underline">{{formatDate .Incident.StartedAt}}</a>
+      </dd>
+    </div>
+  </dl>
+</div>
+
+<!-- Ad slot -->
+<div class="mb-6 text-center">
+  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" data-ad-slot="REPLACE_SLOT" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<!-- Incident timeline -->
+{{if .Incident.Updates}}
+<section>
+  <h2 class="text-xl font-semibold mb-4">Incident Timeline</h2>
+  <div class="relative">
+    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+    <div class="space-y-4">
+      {{range .Incident.Updates}}
+      <div class="flex gap-4 pl-10 relative">
+        <div class="absolute left-3 top-1.5 w-3 h-3 rounded-full bg-brand border-2 border-white ring-2 ring-brand/20"></div>
+        <div class="flex-1 bg-white rounded-xl border border-gray-200 p-4">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="text-xs font-semibold uppercase text-gray-500">{{.Status}}</span>
+            <span class="text-xs text-gray-400">{{formatDateTime .CreatedAt}}</span>
+          </div>
+          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{{.Body}}</p>
+        </div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+</section>
+{{else}}
+<div class="text-center py-10 bg-white rounded-xl border border-gray-200 text-gray-500">
+  No update details available for this incident.
+</div>
+{{end}}
+
+<div class="mt-8 flex gap-3">
+  <a href="/provider/{{.Incident.ProviderSlug}}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-colors">
+    ← All {{.Incident.ProviderName}} incidents
+  </a>
+  <a href="/date/{{formatDate .Incident.StartedAt}}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-colors">
+    Other incidents on {{formatDate .Incident.StartedAt}}
+  </a>
+</div>
+{{end}}
