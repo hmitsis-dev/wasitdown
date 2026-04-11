@@ -1,0 +1,43 @@
+/* wasitdown.dev — custom CSS additions beyond Tailwind CDN */
+
+/* Smooth scroll for anchor navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Timeline connector line */
+.timeline-item:last-child .timeline-line {
+  display: none;
+}
+
+/* Provider grid card hover transition */
+.provider-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.provider-card:hover {
+  transform: translateY(-1px);
+}
+
+/* Uptime bar */
+.uptime-bar {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e);
+  background-size: 400% 100%;
+}
+.uptime-bar[data-pct] {
+  /* width set inline via style */
+}
+
+/* Print styles — useful for incident reports */
+@media print {
+  header, footer, .adsbygoogle { display: none !important; }
+  body { background: white; }
+  a { color: inherit; text-decoration: none; }
+}
+
+/* Focus ring for keyboard nav */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
