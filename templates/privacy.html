@@ -1,0 +1,97 @@
+{{define "privacy.html"}}
+{{template "base" .}}
+{{end}}
+
+{{define "content"}}
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
+  <p class="text-sm text-gray-500 mb-8">Last updated: April 2025</p>
+
+  <div class="prose prose-gray space-y-8 text-gray-700 leading-relaxed">
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">What wasitdown.dev is</h2>
+      <p>
+        wasitdown.dev is a read-only reference tool. It aggregates historical incident and
+        outage data from the <strong>public status pages</strong> of cloud and AI providers
+        (AWS, GCP, Azure, Cloudflare, OpenAI, Anthropic, GitHub, etc.) and presents it in
+        one place. We do not operate those services, and all data displayed here is already
+        publicly available at the source.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Data we collect</h2>
+      <p>
+        <strong>We collect no personal data directly.</strong> There are no user accounts,
+        no sign-up forms, no contact forms, and no cookies set by this site itself.
+      </p>
+      <p class="mt-2">
+        The site is a fully static site served over Cloudflare's CDN. Cloudflare may log
+        standard request metadata (IP address, user-agent, timestamp) as part of normal CDN
+        operation. These logs are subject to
+        <a href="https://www.cloudflare.com/privacypolicy/" class="text-brand hover:underline" target="_blank" rel="noopener">Cloudflare's Privacy Policy</a>.
+        We do not have access to individual request logs.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Cookies &amp; advertising</h2>
+      <p>
+        This site may display ads served by <strong>Google AdSense</strong>. Google and its
+        partners may use cookies to serve ads based on prior visits to this site or other
+        sites. You can opt out of personalised advertising by visiting
+        <a href="https://www.google.com/settings/ads" class="text-brand hover:underline" target="_blank" rel="noopener">Google Ads Settings</a>
+        or
+        <a href="https://www.aboutads.info" class="text-brand hover:underline" target="_blank" rel="noopener">aboutads.info</a>.
+      </p>
+      <p class="mt-2">
+        When ads are enabled, Google's use of advertising cookies is governed by the
+        <a href="https://policies.google.com/privacy" class="text-brand hover:underline" target="_blank" rel="noopener">Google Privacy Policy</a>.
+        We do not share any data with Google beyond what is implicit in loading the AdSense
+        script on a page.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Third-party data sources</h2>
+      <p>
+        Incident data is fetched from the public JSON/RSS feeds of each provider's official
+        status page. We store only the incident metadata that is already publicly published
+        (title, timestamps, impact level, status updates). No personal data is present in or
+        transferred from those feeds.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">GDPR &amp; your rights</h2>
+      <p>
+        Because we do not collect, store, or process personal data ourselves, there is no
+        personal data for us to provide, correct, or delete. If you have concerns about data
+        held by Cloudflare or Google, please contact those services directly via their
+        respective privacy policies linked above.
+      </p>
+      <p class="mt-2">
+        Visitors from the European Economic Area (EEA) should note that Google AdSense
+        (when active) processes data in accordance with Google's EU consent obligations.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Changes to this policy</h2>
+      <p>
+        If we ever start collecting data (e.g. add analytics or a newsletter), this policy
+        will be updated before that happens, and the "last updated" date above will change.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Contact</h2>
+      <p>
+        Questions? Open an issue or discussion on the project's GitHub repository.
+      </p>
+    </section>
+
+  </div>
+</div>
+{{end}}
