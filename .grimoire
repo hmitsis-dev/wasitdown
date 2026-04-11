@@ -1,0 +1,10 @@
+# seldon session config — commit this file
+agent: backend/go
+tools:
+    - cursor
+    - cline
+    - codex
+    - claude
+    - aider
+    - openrouter
+last_updated: "2026-04-11"

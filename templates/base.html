@@ -32,8 +32,7 @@
     .impact-critical { @apply bg-red-100 text-red-800 border border-red-300; }
     body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
   </style>
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" crossorigin="anonymous"></script>
+  {{if adsEnabled}}<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" crossorigin="anonymous"></script>{{end}}
   {{block "head-extra" .}}{{end}}
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
@@ -46,27 +45,8 @@
         </a>
         <nav class="hidden sm:flex items-center gap-6 text-sm font-medium text-gray-600">
           <a href="/" class="hover:text-brand transition-colors">Dashboard</a>
-          <a href="/provider/aws" class="hover:text-brand transition-colors">AWS</a>
-          <a href="/provider/cloudflare" class="hover:text-brand transition-colors">Cloudflare</a>
-          <a href="/provider/openai" class="hover:text-brand transition-colors">OpenAI</a>
-          <a href="/provider/github" class="hover:text-brand transition-colors">GitHub</a>
           <a href="/api/v1/recent.json" class="hover:text-brand transition-colors text-xs text-gray-400">API</a>
         </nav>
-        <button class="sm:hidden p-2 text-gray-500" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-      </div>
-    </div>
-    <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-100 px-4 py-3 space-y-2 text-sm">
-      <a href="/" class="block py-1 text-gray-700 hover:text-brand">Dashboard</a>
-      <a href="/provider/aws" class="block py-1 text-gray-700 hover:text-brand">AWS</a>
-      <a href="/provider/cloudflare" class="block py-1 text-gray-700 hover:text-brand">Cloudflare</a>
-      <a href="/provider/openai" class="block py-1 text-gray-700 hover:text-brand">OpenAI</a>
-      <a href="/provider/github" class="block py-1 text-gray-700 hover:text-brand">GitHub</a>
-      <a href="/provider/anthropic" class="block py-1 text-gray-700 hover:text-brand">Anthropic</a>
-      <a href="/provider/gcp" class="block py-1 text-gray-700 hover:text-brand">GCP</a>
-      <a href="/provider/azure" class="block py-1 text-gray-700 hover:text-brand">Azure</a>
-    </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

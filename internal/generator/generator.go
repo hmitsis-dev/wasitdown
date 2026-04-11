@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"strings"
 	"log/slog"
 	"math"
 	"os"
@@ -24,13 +25,14 @@ type Config struct {
 	OutputDir    string
 	TemplatesDir string
 	StaticDir    string
+	AdsEnabled   bool
 }
 
 // Generator builds the static site from the database.
 type Generator struct {
-	cfg  Config
-	pool *pgxpool.Pool
-	tmpl *template.Template
+	cfg       Config
+	pool      *pgxpool.Pool
+	templates map[string]*template.Template
 }
 
 // New creates a Generator and parses all templates.
@@ -80,7 +82,9 @@ func New(pool *pgxpool.Pool, cfg Config) (*Generator, error) {
 		"formatUptime": func(pct float64) string {
 			return fmt.Sprintf("%.3f%%", pct)
 		},
-		"domain": func() string { return siteDomain },
+		"adsEnabled": func() bool { return cfg.AdsEnabled },
+		"lower":      strings.ToLower,
+		"domain":     func() string { return siteDomain },
 		"now":    func() time.Time { return time.Now().UTC() },
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s) //nolint:gosec
@@ -95,12 +99,30 @@ func New(pool *pgxpool.Pool, cfg Config) (*Generator, error) {
 		},
 	}
 
-	pattern := filepath.Join(cfg.TemplatesDir, "*.html")
-	tmpl, err := template.New("").Funcs(funcMap).ParseGlob(pattern)
+	// Parse base.html once, then clone it per page so each page gets its own
+	// isolated template namespace. This prevents {{define "head-extra"}} in one
+	// page from overwriting another's definition (Go templates share a single
+	// namespace when parsed together via ParseGlob).
+	basePath := filepath.Join(cfg.TemplatesDir, "base.html")
+	base, err := template.New("base.html").Funcs(funcMap).ParseFiles(basePath)
 	if err != nil {
-		return nil, fmt.Errorf("parse templates: %w", err)
+		return nil, fmt.Errorf("parse base template: %w", err)
 	}
-	return &Generator{cfg: cfg, pool: pool, tmpl: tmpl}, nil
+
+	pages := []string{"index.html", "provider.html", "date.html", "incident.html", "compare.html"}
+	templates := make(map[string]*template.Template, len(pages))
+	for _, page := range pages {
+		t, err := base.Clone()
+		if err != nil {
+			return nil, fmt.Errorf("clone base for %s: %w", page, err)
+		}
+		if _, err := t.ParseFiles(filepath.Join(cfg.TemplatesDir, page)); err != nil {
+			return nil, fmt.Errorf("parse %s: %w", page, err)
+		}
+		templates[page] = t
+	}
+
+	return &Generator{cfg: cfg, pool: pool, templates: templates}, nil
 }
 
 // Run generates the complete static site. Safe to call multiple times.
@@ -132,6 +154,11 @@ func (g *Generator) Run(ctx context.Context) error {
 		return fmt.Errorf("recent incidents: %w", err)
 	}
 
+	chaosPairs, err := db.GetChaosPairs(ctx, g.pool, 8)
+	if err != nil {
+		return fmt.Errorf("chaos pairs: %w", err)
+	}
+
 	// Build uptime lookup maps keyed by provider slug.
 	statsMap := func(stats []models.UptimeStats) map[string]models.UptimeStats {
 		m := make(map[string]models.UptimeStats)
@@ -144,8 +171,15 @@ func (g *Generator) Run(ctx context.Context) error {
 	m90 := statsMap(stats90)
 	m365 := statsMap(stats365)
 
+	if err := g.copyStatic(); err != nil {
+		return fmt.Errorf("copy static: %w", err)
+	}
+
+	if err := g.generateIndex(ctx, providers, m30, m90, m365, recent, chaosPairs); err != nil {
+		return err
+	}
+
 	steps := []func(context.Context, []models.Provider, map[string]models.UptimeStats, map[string]models.UptimeStats, map[string]models.UptimeStats, []models.Incident) error{
-		g.generateIndex,
 		g.generateProviderPages,
 		g.generateDatePages,
 		g.generateIncidentPages,
@@ -170,6 +204,7 @@ type indexData struct {
 	Canonical   string
 	Providers   []models.Provider
 	Recent      []models.Incident
+	ChaosPairs  []models.ChaosPair
 	Stats30     map[string]models.UptimeStats
 	Stats90     map[string]models.UptimeStats
 	Stats365    map[string]models.UptimeStats
@@ -228,6 +263,7 @@ func (g *Generator) generateIndex(
 	providers []models.Provider,
 	m30, m90, m365 map[string]models.UptimeStats,
 	recent []models.Incident,
+	chaosPairs []models.ChaosPair,
 ) error {
 	data := indexData{
 		Title:       "Was It Down? — Cloud & AI Provider Incident History",
@@ -235,6 +271,7 @@ func (g *Generator) generateIndex(
 		Canonical:   siteDomain + "/",
 		Providers:   providers,
 		Recent:      recent,
+		ChaosPairs:  chaosPairs,
 		Stats30:     m30,
 		Stats90:     m90,
 		Stats365:    m365,
@@ -428,15 +465,41 @@ func (g *Generator) generateJSON(
 	return nil
 }
 
+// copyStatic copies the static/ directory tree into dist/ so assets are served.
+func (g *Generator) copyStatic() error {
+	return filepath.WalkDir(g.cfg.StaticDir, func(src string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(g.cfg.StaticDir, src)
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(g.cfg.OutputDir, rel)
+		if d.IsDir() {
+			return os.MkdirAll(dst, 0o755)
+		}
+		data, err := os.ReadFile(src)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(dst, data, 0o644)
+	})
+}
+
 // --- helpers ---
 
 func (g *Generator) render(tmplName, outPath string, data any) error {
+	t, ok := g.templates[tmplName]
+	if !ok {
+		return fmt.Errorf("template not found: %s", tmplName)
+	}
 	f, err := os.Create(outPath)
 	if err != nil {
 		return fmt.Errorf("create %s: %w", outPath, err)
 	}
 	defer f.Close()
-	if err := g.tmpl.ExecuteTemplate(f, tmplName, data); err != nil {
+	if err := t.ExecuteTemplate(f, tmplName, data); err != nil {
 		return fmt.Errorf("render %s: %w", tmplName, err)
 	}
 	return nil

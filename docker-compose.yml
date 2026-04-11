@@ -33,5 +33,36 @@ services:
     # daemon mode polls every 15min; for cron-based you can override with:
     # command: ["once"]
 
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://wasitdown:${POSTGRES_PASSWORD:-changeme}@postgres:5432/wasitdown?sslmode=disable
+      OUTPUT_DIR: /app/dist
+      TEMPLATES_DIR: /app/templates
+      STATIC_DIR: /app/static
+      ADS_ENABLED: ${ADS_ENABLED:-false}
+    volumes:
+      - distdata:/app/dist
+    # runs once then exits — restart: unless-stopped will re-run it every time
+    # to preview fresh builds; remove restart if you only want one pass
+
+  web:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - generator
+    ports:
+      - "8080:80"
+    volumes:
+      - distdata:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
 volumes:
   pgdata:
+  distdata:

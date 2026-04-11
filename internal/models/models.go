@@ -45,7 +45,7 @@ type Incident struct {
 	Updates         []IncidentUpdate `json:"updates,omitempty"`
 }
 
-func (i *Incident) ImpactColor() string {
+func (i Incident) ImpactColor() string {
 	switch i.Impact {
 	case ImpactMinor:
 		return "yellow"
@@ -58,7 +58,7 @@ func (i *Incident) ImpactColor() string {
 	}
 }
 
-func (i *Incident) IsResolved() bool {
+func (i Incident) IsResolved() bool {
 	return i.ResolvedAt != nil
 }
 
@@ -89,6 +89,15 @@ type UptimeStats struct {
 	AvgDuration     float64 `json:"avg_duration_minutes"`
 	MedianDuration  float64 `json:"median_duration_minutes"`
 	LongestDuration int     `json:"longest_duration_minutes"`
+}
+
+// ChaosPair holds two providers that have had concurrent incidents and how often.
+type ChaosPair struct {
+	SlugA  string `json:"slug_a"`
+	NameA  string `json:"name_a"`
+	SlugB  string `json:"slug_b"`
+	NameB  string `json:"name_b"`
+	Count  int    `json:"count"`
 }
 
 // DateCorrelation holds cross-provider incident data for a given date.

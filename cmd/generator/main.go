@@ -40,6 +40,7 @@ func main() {
 		OutputDir:    outputDir,
 		TemplatesDir: templatesDir,
 		StaticDir:    staticDir,
+		AdsEnabled:   os.Getenv("ADS_ENABLED") == "true",
 	}
 
 	gen, err := generator.New(pool, cfg)
