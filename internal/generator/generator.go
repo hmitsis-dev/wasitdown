@@ -23,10 +23,11 @@ const siteDomain = "https://wasitdown.dev"
 
 // Config holds generator settings.
 type Config struct {
-	OutputDir    string
-	TemplatesDir string
-	StaticDir    string
-	AdsEnabled   bool
+	OutputDir       string
+	TemplatesDir    string
+	StaticDir       string
+	AdsEnabled      bool
+	GAMeasurementID string // e.g. "G-XXXXXXXXXX"; empty = analytics disabled
 }
 
 // Generator builds the static site from the database.
@@ -83,7 +84,8 @@ func New(pool *pgxpool.Pool, cfg Config) (*Generator, error) {
 		"formatUptime": func(pct float64) string {
 			return fmt.Sprintf("%.3f%%", pct)
 		},
-		"adsEnabled": func() bool { return cfg.AdsEnabled },
+		"adsEnabled":      func() bool   { return cfg.AdsEnabled },
+		"analyticsID":     func() string { return cfg.GAMeasurementID },
 		"lower":      strings.ToLower,
 		"domain":     func() string { return siteDomain },
 		"now":    func() time.Time { return time.Now().UTC() },
