@@ -33,6 +33,15 @@
     body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
   </style>
   {{if adsEnabled}}<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" crossorigin="anonymous"></script>{{end}}
+  {{if analyticsID}}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{analyticsID}}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{analyticsID}}');
+  </script>
+  {{end}}
   {{block "head-extra" .}}{{end}}
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
