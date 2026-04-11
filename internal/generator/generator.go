@@ -3,6 +3,7 @@ package generator
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"html/template"
 	"strings"
@@ -109,7 +110,7 @@ func New(pool *pgxpool.Pool, cfg Config) (*Generator, error) {
 		return nil, fmt.Errorf("parse base template: %w", err)
 	}
 
-	pages := []string{"index.html", "provider.html", "date.html", "incident.html", "compare.html"}
+	pages := []string{"index.html", "provider.html", "date.html", "incident.html", "compare.html", "privacy.html"}
 	templates := make(map[string]*template.Template, len(pages))
 	for _, page := range pages {
 		t, err := base.Clone()
@@ -192,6 +193,14 @@ func (g *Generator) Run(ctx context.Context) error {
 			return err
 		}
 	}
+
+	if err := g.generateStaticPages(); err != nil {
+		return err
+	}
+	if err := g.generateSitemap(ctx, providers); err != nil {
+		return fmt.Errorf("sitemap: %w", err)
+	}
+
 	slog.Info("site generation complete", "output", g.cfg.OutputDir)
 	return nil
 }
@@ -238,6 +247,13 @@ type incidentData struct {
 	Description string
 	Canonical   string
 	Incident    models.Incident
+	Generated   time.Time
+}
+
+type staticData struct {
+	Title       string
+	Description string
+	Canonical   string
 	Generated   time.Time
 }
 
@@ -463,6 +479,120 @@ func (g *Generator) generateJSON(
 		return err
 	}
 	return nil
+}
+
+func (g *Generator) generateStaticPages() error {
+	pages := []struct {
+		tmpl      string
+		out       string
+		title     string
+		desc      string
+		canonical string
+	}{
+		{
+			tmpl:      "privacy.html",
+			out:       filepath.Join(g.cfg.OutputDir, "privacy", "index.html"),
+			title:     "Privacy Policy — wasitdown.dev",
+			desc:      "Privacy policy for wasitdown.dev — what data we collect, cookies, advertising, and GDPR information.",
+			canonical: siteDomain + "/privacy/",
+		},
+	}
+	for _, p := range pages {
+		if err := os.MkdirAll(filepath.Dir(p.out), 0o755); err != nil {
+			return err
+		}
+		data := staticData{
+			Title:       p.title,
+			Description: p.desc,
+			Canonical:   p.canonical,
+			Generated:   time.Now().UTC(),
+		}
+		if err := g.render(p.tmpl, p.out, data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// generateSitemap writes dist/sitemap.xml covering all generated URLs.
+func (g *Generator) generateSitemap(ctx context.Context, providers []models.Provider) error {
+	type url struct {
+		Loc        string  `xml:"loc"`
+		ChangeFreq string  `xml:"changefreq,omitempty"`
+		Priority   float64 `xml:"priority,omitempty"`
+	}
+	type urlset struct {
+		XMLName xml.Name `xml:"urlset"`
+		Xmlns   string   `xml:"xmlns,attr"`
+		URLs    []url    `xml:"url"`
+	}
+
+	urls := []url{
+		{Loc: siteDomain + "/", ChangeFreq: "hourly", Priority: 1.0},
+		{Loc: siteDomain + "/privacy/", ChangeFreq: "monthly", Priority: 0.3},
+	}
+
+	for _, p := range providers {
+		urls = append(urls, url{
+			Loc:        fmt.Sprintf("%s/provider/%s/", siteDomain, p.Slug),
+			ChangeFreq: "hourly",
+			Priority:   0.8,
+		})
+	}
+
+	dates, err := db.GetDistinctIncidentDates(ctx, g.pool)
+	if err != nil {
+		return fmt.Errorf("get dates: %w", err)
+	}
+	for _, d := range dates {
+		urls = append(urls, url{
+			Loc:        fmt.Sprintf("%s/date/%s/", siteDomain, d.UTC().Format("2006-01-02")),
+			ChangeFreq: "weekly",
+			Priority:   0.5,
+		})
+	}
+
+	ids, err := db.GetAllIncidentIDs(ctx, g.pool)
+	if err != nil {
+		return fmt.Errorf("get incident IDs: %w", err)
+	}
+	for _, id := range ids {
+		urls = append(urls, url{
+			Loc:      fmt.Sprintf("%s/incident/%d/", siteDomain, id),
+			Priority: 0.6,
+		})
+	}
+
+	for i := 0; i < len(providers); i++ {
+		for j := i + 1; j < len(providers); j++ {
+			urls = append(urls, url{
+				Loc:        fmt.Sprintf("%s/compare/%s-vs-%s/", siteDomain, providers[i].Slug, providers[j].Slug),
+				ChangeFreq: "daily",
+				Priority:   0.4,
+			})
+		}
+	}
+
+	out := urlset{
+		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		URLs:  urls,
+	}
+
+	f, err := os.Create(filepath.Join(g.cfg.OutputDir, "sitemap.xml"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(xml.Header); err != nil {
+		return err
+	}
+	enc := xml.NewEncoder(f)
+	enc.Indent("", "  ")
+	if err := enc.Encode(out); err != nil {
+		return err
+	}
+	return enc.Close()
 }
 
 // copyStatic copies the static/ directory tree into dist/ so assets are served.
