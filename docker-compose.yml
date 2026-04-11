@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wasitdown
+      POSTGRES_USER: wasitdown
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wasitdown"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://wasitdown:${POSTGRES_PASSWORD:-changeme}@postgres:5432/wasitdown?sslmode=disable
+      MIGRATIONS_DIR: /app/db/migrations
+      SCRAPER_MODE: daemon
+    # daemon mode polls every 15min; for cron-based you can override with:
+    # command: ["once"]
+
+volumes:
+  pgdata:
