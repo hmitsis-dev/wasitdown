@@ -37,10 +37,11 @@ func main() {
 	}
 
 	cfg := generator.Config{
-		OutputDir:    outputDir,
-		TemplatesDir: templatesDir,
-		StaticDir:    staticDir,
-		AdsEnabled:   os.Getenv("ADS_ENABLED") == "true",
+		OutputDir:       outputDir,
+		TemplatesDir:    templatesDir,
+		StaticDir:       staticDir,
+		AdsEnabled:      os.Getenv("ADS_ENABLED") == "true",
+		GAMeasurementID: os.Getenv("GA_MEASUREMENT_ID"),
 	}
 
 	gen, err := generator.New(pool, cfg)
