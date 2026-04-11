@@ -118,12 +118,12 @@ docker compose logs postgres
 The self-hosted runner needs Go installed to run the scraper and generator.
 
 ```bash
-# Download Go 1.22
-wget https://go.dev/dl/go1.22.4.linux-amd64.tar.gz
+# Download Go 1.25
+wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
 
 # Install
 sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
 
 # Add to PATH (add to ~/.bashrc and ~/.profile for runner service)
 echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
