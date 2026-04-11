@@ -23,19 +23,52 @@
   <p class="text-gray-600 text-lg">Historical incident tracker for major cloud &amp; AI providers. Cross-provider outage correlation, uptime stats, and full timelines.</p>
 </div>
 
+{{if .ChaosPairs}}
+<!-- Chaos Buddies -->
+<section class="mb-10">
+  <h2 class="text-xl font-semibold mb-1">Chaos Buddies 🔥</h2>
+  <p class="text-sm text-gray-500 mb-4">Provider pairs that have gone down within 2 hours of each other — coincidence or chaos?</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    {{range .ChaosPairs}}
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <a href="/provider/{{.SlugA}}" class="font-medium text-brand hover:underline truncate">{{.NameA}}</a>
+        <span class="text-gray-400 text-xs flex-shrink-0">+</span>
+        <a href="/provider/{{.SlugB}}" class="font-medium text-brand hover:underline truncate">{{.NameB}}</a>
+      </div>
+      <div class="text-xs text-gray-500">
+        <span class="font-semibold text-gray-800">{{.Count}}×</span> concurrent incidents
+      </div>
+    </div>
+    {{end}}
+  </div>
+</section>
+{{end}}
+
+{{if adsEnabled}}
 <!-- Ad slot top -->
 <div class="mb-6 text-center">
   <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" data-ad-slot="REPLACE_SLOT" data-ad-format="auto" data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
+{{end}}
 
 <!-- Provider status grid -->
 <section class="mb-10">
-  <h2 class="text-xl font-semibold mb-4">Provider Status Grid</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <h2 class="text-xl font-semibold">Provider Status Grid</h2>
+    <input
+      id="provider-filter"
+      type="search"
+      placeholder="Filter providers…"
+      class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+      oninput="filterProviders(this.value)"
+    >
+  </div>
+  <div id="provider-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     {{range .Providers}}
     {{$s := index $.Stats30 .Slug}}
-    <a href="/provider/{{.Slug}}" class="bg-white rounded-xl border border-gray-200 p-4 hover:border-brand hover:shadow-sm transition-all group">
+    <a href="/provider/{{.Slug}}" data-name="{{.Name | lower}}" class="bg-white rounded-xl border border-gray-200 p-4 hover:border-brand hover:shadow-sm transition-all group">
       <div class="font-semibold text-gray-900 group-hover:text-brand truncate">{{.Name}}</div>
       <div class="mt-2 text-2xl font-bold {{uptimeColor $s.UptimePct}}">{{formatUptime $s.UptimePct}}</div>
       <div class="text-xs text-gray-400 mt-1">30-day uptime</div>
@@ -47,21 +80,35 @@
     </a>
     {{end}}
   </div>
+  <p id="provider-empty" class="hidden text-gray-400 text-sm mt-4">No providers match your search.</p>
 </section>
+<script>
+function filterProviders(q) {
+  var term = q.toLowerCase().trim();
+  var cards = document.querySelectorAll('#provider-grid a');
+  var visible = 0;
+  cards.forEach(function(card) {
+    var match = !term || card.dataset.name.indexOf(term) !== -1;
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  document.getElementById('provider-empty').classList.toggle('hidden', visible > 0);
+}
+</script>
 
 <!-- Uptime table -->
 <section class="mb-10">
   <h2 class="text-xl font-semibold mb-4">Uptime Overview</h2>
   <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-    <table class="w-full text-sm">
+    <table id="uptime-table" class="w-full text-sm">
       <thead class="bg-gray-50 border-b border-gray-200">
         <tr>
-          <th class="text-left py-3 px-4 font-semibold text-gray-700">Provider</th>
-          <th class="text-right py-3 px-4 font-semibold text-gray-700">30 days</th>
-          <th class="text-right py-3 px-4 font-semibold text-gray-700">90 days</th>
-          <th class="text-right py-3 px-4 font-semibold text-gray-700">365 days</th>
-          <th class="text-right py-3 px-4 font-semibold text-gray-700">Incidents (90d)</th>
-          <th class="text-right py-3 px-4 font-semibold text-gray-700">Avg Duration</th>
+          <th data-col="0" class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer select-none hover:text-brand" onclick="sortTable(0)">Provider <span class="sort-icon text-gray-400">↕</span></th>
+          <th data-col="1" class="text-right py-3 px-4 font-semibold text-gray-700 cursor-pointer select-none hover:text-brand" onclick="sortTable(1)">30 days <span class="sort-icon text-gray-400">↕</span></th>
+          <th data-col="2" class="text-right py-3 px-4 font-semibold text-gray-700 cursor-pointer select-none hover:text-brand" onclick="sortTable(2)">90 days <span class="sort-icon text-gray-400">↕</span></th>
+          <th data-col="3" class="text-right py-3 px-4 font-semibold text-gray-700 cursor-pointer select-none hover:text-brand" onclick="sortTable(3)">365 days <span class="sort-icon text-gray-400">↕</span></th>
+          <th data-col="4" class="text-right py-3 px-4 font-semibold text-gray-700 cursor-pointer select-none hover:text-brand" onclick="sortTable(4)">Incidents (90d) <span class="sort-icon text-gray-400">↕</span></th>
+          <th data-col="5" class="text-right py-3 px-4 font-semibold text-gray-700 cursor-pointer select-none hover:text-brand" onclick="sortTable(5)">Avg Duration <span class="sort-icon text-gray-400">↕</span></th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -69,7 +116,13 @@
         {{$s30 := index $.Stats30 .Slug}}
         {{$s90 := index $.Stats90 .Slug}}
         {{$s365 := index $.Stats365 .Slug}}
-        <tr class="hover:bg-gray-50 transition-colors">
+        <tr class="hover:bg-gray-50 transition-colors"
+            data-name="{{.Name | lower}}"
+            data-30="{{$s30.UptimePct}}"
+            data-90="{{$s90.UptimePct}}"
+            data-365="{{$s365.UptimePct}}"
+            data-incidents="{{$s90.IncidentCount}}"
+            data-avg="{{$s90.AvgDuration}}">
           <td class="py-3 px-4">
             <a href="/provider/{{.Slug}}" class="font-medium text-brand hover:underline">{{.Name}}</a>
           </td>
@@ -86,6 +139,31 @@
     </table>
   </div>
 </section>
+<script>
+(function() {
+  var sortState = {col: -1, asc: true};
+  var colKeys = ['name', '30', '90', '365', 'incidents', 'avg'];
+
+  window.sortTable = function(col) {
+    var tbody = document.querySelector('#uptime-table tbody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    var key = colKeys[col];
+    var asc = sortState.col === col ? !sortState.asc : true;
+    sortState = {col: col, asc: asc};
+
+    rows.sort(function(a, b) {
+      var av = a.dataset[key], bv = b.dataset[key];
+      var n = col > 0 ? parseFloat(av) - parseFloat(bv) : av.localeCompare(bv);
+      return asc ? n : -n;
+    });
+    rows.forEach(function(r) { tbody.appendChild(r); });
+
+    document.querySelectorAll('#uptime-table th .sort-icon').forEach(function(el, i) {
+      el.textContent = i === col ? (asc ? '↑' : '↓') : '↕';
+    });
+  };
+})();
+</script>
 
 <!-- Recent incidents -->
 <section class="mb-10">
@@ -120,9 +198,11 @@
   {{end}}
 </section>
 
+{{if adsEnabled}}
 <!-- Ad slot bottom -->
 <div class="text-center mt-6">
   <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" data-ad-slot="REPLACE_SLOT" data-ad-format="auto" data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
+{{end}}
 {{end}}

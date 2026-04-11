@@ -246,6 +246,36 @@ func GetUptimeStats(ctx context.Context, pool *pgxpool.Pool, days int) ([]models
 	return out, rows.Err()
 }
 
+// GetChaosPairs returns provider pairs whose incidents overlapped within a 2-hour
+// window most often. Only pairs with at least 2 co-occurrences are included.
+func GetChaosPairs(ctx context.Context, pool *pgxpool.Pool, limit int) ([]models.ChaosPair, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT p1.name, p1.slug, p2.name, p2.slug, COUNT(*) AS cnt
+		FROM incidents i1
+		JOIN incidents i2
+		  ON i2.provider_id > i1.provider_id
+		 AND ABS(EXTRACT(EPOCH FROM (i2.started_at - i1.started_at))) <= 7200
+		JOIN providers p1 ON p1.id = i1.provider_id
+		JOIN providers p2 ON p2.id = i2.provider_id
+		GROUP BY p1.name, p1.slug, p2.name, p2.slug
+		HAVING COUNT(*) >= 2
+		ORDER BY cnt DESC
+		LIMIT $1`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("chaos pairs: %w", err)
+	}
+	defer rows.Close()
+	var out []models.ChaosPair
+	for rows.Next() {
+		var p models.ChaosPair
+		if err := rows.Scan(&p.NameA, &p.SlugA, &p.NameB, &p.SlugB, &p.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
 func scanIncidents(rows pgx.Rows) ([]models.Incident, error) {
 	var out []models.Incident
 	for rows.Next() {
