@@ -1,0 +1,128 @@
+{{template "base" .}}
+
+{{define "head-extra"}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Was It Down?",
+  "url": "{{domain}}",
+  "description": "{{.Description}}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{domain}}/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{{end}}
+
+{{define "content"}}
+<div class="mb-8">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">Was It Down?</h1>
+  <p class="text-gray-600 text-lg">Historical incident tracker for major cloud &amp; AI providers. Cross-provider outage correlation, uptime stats, and full timelines.</p>
+</div>
+
+<!-- Ad slot top -->
+<div class="mb-6 text-center">
+  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" data-ad-slot="REPLACE_SLOT" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<!-- Provider status grid -->
+<section class="mb-10">
+  <h2 class="text-xl font-semibold mb-4">Provider Status Grid</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    {{range .Providers}}
+    {{$s := index $.Stats30 .Slug}}
+    <a href="/provider/{{.Slug}}" class="bg-white rounded-xl border border-gray-200 p-4 hover:border-brand hover:shadow-sm transition-all group">
+      <div class="font-semibold text-gray-900 group-hover:text-brand truncate">{{.Name}}</div>
+      <div class="mt-2 text-2xl font-bold {{uptimeColor $s.UptimePct}}">{{formatUptime $s.UptimePct}}</div>
+      <div class="text-xs text-gray-400 mt-1">30-day uptime</div>
+      {{if gt $s.IncidentCount 0}}
+      <div class="mt-2 text-xs text-orange-600 font-medium">{{$s.IncidentCount}} incident{{if gt $s.IncidentCount 1}}s{{end}}</div>
+      {{else}}
+      <div class="mt-2 text-xs text-green-600 font-medium">No incidents</div>
+      {{end}}
+    </a>
+    {{end}}
+  </div>
+</section>
+
+<!-- Uptime table -->
+<section class="mb-10">
+  <h2 class="text-xl font-semibold mb-4">Uptime Overview</h2>
+  <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left py-3 px-4 font-semibold text-gray-700">Provider</th>
+          <th class="text-right py-3 px-4 font-semibold text-gray-700">30 days</th>
+          <th class="text-right py-3 px-4 font-semibold text-gray-700">90 days</th>
+          <th class="text-right py-3 px-4 font-semibold text-gray-700">365 days</th>
+          <th class="text-right py-3 px-4 font-semibold text-gray-700">Incidents (90d)</th>
+          <th class="text-right py-3 px-4 font-semibold text-gray-700">Avg Duration</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{range .Providers}}
+        {{$s30 := index $.Stats30 .Slug}}
+        {{$s90 := index $.Stats90 .Slug}}
+        {{$s365 := index $.Stats365 .Slug}}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-3 px-4">
+            <a href="/provider/{{.Slug}}" class="font-medium text-brand hover:underline">{{.Name}}</a>
+          </td>
+          <td class="py-3 px-4 text-right font-mono {{uptimeColor $s30.UptimePct}}">{{formatUptime $s30.UptimePct}}</td>
+          <td class="py-3 px-4 text-right font-mono {{uptimeColor $s90.UptimePct}}">{{formatUptime $s90.UptimePct}}</td>
+          <td class="py-3 px-4 text-right font-mono {{uptimeColor $s365.UptimePct}}">{{formatUptime $s365.UptimePct}}</td>
+          <td class="py-3 px-4 text-right text-gray-700">{{$s90.IncidentCount}}</td>
+          <td class="py-3 px-4 text-right text-gray-500">
+            {{if gt $s90.AvgDuration 0.0}}{{roundFloat $s90.AvgDuration}}m{{else}}—{{end}}
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Recent incidents -->
+<section class="mb-10">
+  <h2 class="text-xl font-semibold mb-4">Recent Incidents</h2>
+  {{if .Recent}}
+  <div class="space-y-3">
+    {{range .Recent}}
+    <a href="/incident/{{.ID}}" class="block bg-white rounded-xl border border-gray-200 p-4 hover:border-brand hover:shadow-sm transition-all">
+      <div class="flex flex-wrap items-start gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{impactBadge .Impact}}">
+          {{.Impact}}
+        </span>
+        <span class="text-xs text-gray-500 bg-gray-100 rounded px-2 py-0.5">{{.ProviderName}}</span>
+        {{if .IsResolved}}
+        <span class="text-xs text-green-700 bg-green-50 rounded px-2 py-0.5 border border-green-200">resolved</span>
+        {{else}}
+        <span class="text-xs text-orange-700 bg-orange-50 rounded px-2 py-0.5 border border-orange-200">{{.Status}}</span>
+        {{end}}
+      </div>
+      <div class="mt-2 font-medium text-gray-900">{{.Title}}</div>
+      <div class="mt-1 text-xs text-gray-400 flex gap-3">
+        <span>Started: {{formatDateTime .StartedAt}}</span>
+        {{if .DurationMinutes}}<span>Duration: {{.DurationMinutes}}m</span>{{end}}
+      </div>
+    </a>
+    {{end}}
+  </div>
+  {{else}}
+  <div class="text-gray-500 text-center py-12 bg-white rounded-xl border border-gray-200">
+    No incidents recorded yet. The scraper may still be running.
+  </div>
+  {{end}}
+</section>
+
+<!-- Ad slot bottom -->
+<div class="text-center mt-6">
+  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" data-ad-slot="REPLACE_SLOT" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+{{end}}

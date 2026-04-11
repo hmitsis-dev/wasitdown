@@ -1,0 +1,152 @@
+{{template "base" .}}
+
+{{define "head-extra"}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "{{.Title}}",
+  "url": "{{.Canonical}}",
+  "description": "{{.Description}}"
+}
+</script>
+{{end}}
+
+{{define "content"}}
+<nav class="text-sm text-gray-500 mb-6 flex items-center gap-1">
+  <a href="/" class="hover:text-brand">Home</a>
+  <span>/</span>
+  <span class="text-gray-900 font-medium">{{.ProviderA.Name}} vs {{.ProviderB.Name}}</span>
+</nav>
+
+<div class="mb-8">
+  <h1 class="text-2xl font-bold text-gray-900">{{.ProviderA.Name}} vs {{.ProviderB.Name}}</h1>
+  <p class="text-gray-500 mt-1">Side-by-side uptime and incident comparison.</p>
+</div>
+
+<!-- Uptime comparison -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+  {{/* Provider A */}}
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-bold text-lg text-gray-900 mb-4">
+      <a href="/provider/{{.ProviderA.Slug}}" class="hover:text-brand">{{.ProviderA.Name}}</a>
+    </h2>
+    <div class="space-y-4">
+      <div>
+        <div class="text-xs text-gray-500 uppercase font-medium mb-1">30-day uptime</div>
+        <div class="text-3xl font-bold {{uptimeColor .Stats30A.UptimePct}}">{{formatUptime .Stats30A.UptimePct}}</div>
+        <div class="text-xs text-gray-400 mt-0.5">{{.Stats30A.IncidentCount}} incidents</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 uppercase font-medium mb-1">90-day uptime</div>
+        <div class="text-2xl font-bold {{uptimeColor .Stats90A.UptimePct}}">{{formatUptime .Stats90A.UptimePct}}</div>
+        <div class="text-xs text-gray-400 mt-0.5">avg {{roundFloat .Stats90A.AvgDuration}}m · longest {{.Stats90A.LongestDuration}}m</div>
+      </div>
+    </div>
+    <div class="mt-6 border-t border-gray-100 pt-4">
+      <div class="text-sm font-medium text-gray-700 mb-2">Recent incidents</div>
+      {{if .IncidentsA}}
+      <div class="space-y-1.5">
+        {{range $i, $inc := .IncidentsA}}{{if lt $i 5}}
+        <a href="/incident/{{$inc.ID}}" class="flex items-center gap-2 text-xs text-gray-600 hover:text-brand py-1">
+          <span class="inline-block w-1.5 h-1.5 rounded-full
+            {{if eq $inc.Impact "critical"}}bg-red-500{{else if eq $inc.Impact "major"}}bg-orange-500{{else if eq $inc.Impact "minor"}}bg-yellow-500{{else}}bg-gray-400{{end}}"></span>
+          <span class="truncate flex-1">{{$inc.Title}}</span>
+          <span class="text-gray-400 shrink-0">{{formatDate $inc.StartedAt}}</span>
+        </a>
+        {{end}}{{end}}
+      </div>
+      {{else}}<div class="text-xs text-gray-400">No incidents</div>{{end}}
+    </div>
+  </div>
+
+  {{/* Provider B */}}
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h2 class="font-bold text-lg text-gray-900 mb-4">
+      <a href="/provider/{{.ProviderB.Slug}}" class="hover:text-brand">{{.ProviderB.Name}}</a>
+    </h2>
+    <div class="space-y-4">
+      <div>
+        <div class="text-xs text-gray-500 uppercase font-medium mb-1">30-day uptime</div>
+        <div class="text-3xl font-bold {{uptimeColor .Stats30B.UptimePct}}">{{formatUptime .Stats30B.UptimePct}}</div>
+        <div class="text-xs text-gray-400 mt-0.5">{{.Stats30B.IncidentCount}} incidents</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 uppercase font-medium mb-1">90-day uptime</div>
+        <div class="text-2xl font-bold {{uptimeColor .Stats90B.UptimePct}}">{{formatUptime .Stats90B.UptimePct}}</div>
+        <div class="text-xs text-gray-400 mt-0.5">avg {{roundFloat .Stats90B.AvgDuration}}m · longest {{.Stats90B.LongestDuration}}m</div>
+      </div>
+    </div>
+    <div class="mt-6 border-t border-gray-100 pt-4">
+      <div class="text-sm font-medium text-gray-700 mb-2">Recent incidents</div>
+      {{if .IncidentsB}}
+      <div class="space-y-1.5">
+        {{range $i, $inc := .IncidentsB}}{{if lt $i 5}}
+        <a href="/incident/{{$inc.ID}}" class="flex items-center gap-2 text-xs text-gray-600 hover:text-brand py-1">
+          <span class="inline-block w-1.5 h-1.5 rounded-full
+            {{if eq $inc.Impact "critical"}}bg-red-500{{else if eq $inc.Impact "major"}}bg-orange-500{{else if eq $inc.Impact "minor"}}bg-yellow-500{{else}}bg-gray-400{{end}}"></span>
+          <span class="truncate flex-1">{{$inc.Title}}</span>
+          <span class="text-gray-400 shrink-0">{{formatDate $inc.StartedAt}}</span>
+        </a>
+        {{end}}{{end}}
+      </div>
+      {{else}}<div class="text-xs text-gray-400">No incidents</div>{{end}}
+    </div>
+  </div>
+</div>
+
+<!-- Ad slot -->
+<div class="mb-8 text-center">
+  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID" data-ad-slot="REPLACE_SLOT" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<!-- Side-by-side incident table -->
+<section>
+  <h2 class="text-xl font-semibold mb-4">Incident Timeline Comparison</h2>
+  <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left py-3 px-4 font-semibold">Date</th>
+          <th class="text-left py-3 px-4 font-semibold text-brand">{{.ProviderA.Name}}</th>
+          <th class="text-left py-3 px-4 font-semibold text-indigo-500">{{.ProviderB.Name}}</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{/* Build a unified date-keyed view in the template — limited without maps, so show each list */}}
+        {{range .IncidentsA}}
+        <tr class="hover:bg-gray-50">
+          <td class="py-2 px-4 text-gray-500 text-xs whitespace-nowrap">
+            <a href="/date/{{formatDate .StartedAt}}" class="hover:text-brand">{{formatDate .StartedAt}}</a>
+          </td>
+          <td class="py-2 px-4">
+            <a href="/incident/{{.ID}}" class="flex items-center gap-1.5 text-brand hover:underline">
+              <span class="inline-block w-1.5 h-1.5 rounded-full
+                {{if eq .Impact "critical"}}bg-red-500{{else if eq .Impact "major"}}bg-orange-500{{else if eq .Impact "minor"}}bg-yellow-500{{else}}bg-gray-400{{end}}"></span>
+              {{.Title}}
+            </a>
+          </td>
+          <td class="py-2 px-4 text-gray-400 text-xs">—</td>
+        </tr>
+        {{end}}
+        {{range .IncidentsB}}
+        <tr class="hover:bg-gray-50">
+          <td class="py-2 px-4 text-gray-500 text-xs whitespace-nowrap">
+            <a href="/date/{{formatDate .StartedAt}}" class="hover:text-brand">{{formatDate .StartedAt}}</a>
+          </td>
+          <td class="py-2 px-4 text-gray-400 text-xs">—</td>
+          <td class="py-2 px-4">
+            <a href="/incident/{{.ID}}" class="flex items-center gap-1.5 text-indigo-500 hover:underline">
+              <span class="inline-block w-1.5 h-1.5 rounded-full
+                {{if eq .Impact "critical"}}bg-red-500{{else if eq .Impact "major"}}bg-orange-500{{else if eq .Impact "minor"}}bg-yellow-500{{else}}bg-gray-400{{end}}"></span>
+              {{.Title}}
+            </a>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}

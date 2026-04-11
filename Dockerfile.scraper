@@ -1,0 +1,23 @@
+# Build stage
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/scraper ./cmd/scraper
+
+# Runtime stage
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+COPY --from=builder /bin/scraper /bin/scraper
+COPY db/migrations /app/db/migrations
+
+ENV MIGRATIONS_DIR=/app/db/migrations
+ENV SCRAPER_MODE=once
+
+ENTRYPOINT ["/bin/scraper"]
