@@ -98,7 +98,10 @@ function filterProviders(q) {
 
 <!-- Uptime table -->
 <section class="mb-10">
-  <h2 class="text-xl font-semibold mb-4">Uptime Overview</h2>
+  <div class="flex items-baseline gap-3 mb-4">
+    <h2 class="text-xl font-semibold">Uptime Overview</h2>
+    <span class="text-xs text-gray-400">based on major &amp; critical incidents only — minor degradations excluded</span>
+  </div>
   <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
     <table id="uptime-table" class="w-full text-sm">
       <thead class="bg-gray-50 border-b border-gray-200">
