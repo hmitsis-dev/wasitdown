@@ -36,6 +36,7 @@ jobs:
       - name: Run generator
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
           OUTPUT_DIR: dist
           TEMPLATES_DIR: templates
           STATIC_DIR: static
