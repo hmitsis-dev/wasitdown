@@ -152,6 +152,11 @@ func (g *Generator) Run(ctx context.Context) error {
 		return fmt.Errorf("uptime 365d: %w", err)
 	}
 
+	today, err := db.GetTodayIncidents(ctx, g.pool)
+	if err != nil {
+		return fmt.Errorf("today incidents: %w", err)
+	}
+
 	recent, err := db.GetRecentIncidents(ctx, g.pool, 100)
 	if err != nil {
 		return fmt.Errorf("recent incidents: %w", err)
@@ -178,7 +183,7 @@ func (g *Generator) Run(ctx context.Context) error {
 		return fmt.Errorf("copy static: %w", err)
 	}
 
-	if err := g.generateIndex(ctx, providers, m30, m90, m365, recent, chaosPairs); err != nil {
+	if err := g.generateIndex(ctx, providers, m30, m90, m365, today, recent, chaosPairs); err != nil {
 		return err
 	}
 
@@ -217,6 +222,7 @@ type indexData struct {
 	Description string
 	Canonical   string
 	Providers   []models.Provider
+	Today       []models.Incident
 	Recent      []models.Incident
 	ChaosPairs  []models.ChaosPair
 	Stats30     map[string]models.UptimeStats
@@ -283,6 +289,7 @@ func (g *Generator) generateIndex(
 	ctx context.Context,
 	providers []models.Provider,
 	m30, m90, m365 map[string]models.UptimeStats,
+	today []models.Incident,
 	recent []models.Incident,
 	chaosPairs []models.ChaosPair,
 ) error {
@@ -291,6 +298,7 @@ func (g *Generator) generateIndex(
 		Description: "Track historical incidents across AWS, Cloudflare, OpenAI, Anthropic, GitHub, Vercel, GCP, Azure and more. See uptime stats, cross-provider outages, and full incident timelines.",
 		Canonical:   siteDomain + "/",
 		Providers:   providers,
+		Today:       today,
 		Recent:      recent,
 		ChaosPairs:  chaosPairs,
 		Stats30:     m30,

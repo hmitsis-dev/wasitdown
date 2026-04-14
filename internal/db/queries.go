@@ -83,6 +83,25 @@ func LogScrape(ctx context.Context, pool *pgxpool.Pool, providerID int, success 
 	return err
 }
 
+// GetTodayIncidents returns all active (unresolved) incidents plus any incidents
+// that started today (UTC), newest first.
+func GetTodayIncidents(ctx context.Context, pool *pgxpool.Pool) ([]models.Incident, error) {
+	todayUTC := time.Now().UTC().Truncate(24 * time.Hour)
+	rows, err := pool.Query(ctx, `
+		SELECT i.id, i.provider_id, p.name, p.slug, i.external_id, i.title, i.impact,
+		       i.status, i.started_at, i.resolved_at, i.duration_minutes, i.created_at
+		FROM incidents i
+		JOIN providers p ON p.id = i.provider_id
+		WHERE i.resolved_at IS NULL
+		   OR i.started_at >= $1
+		ORDER BY i.resolved_at NULLS FIRST, i.started_at DESC`, todayUTC)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanIncidents(rows)
+}
+
 // GetRecentIncidents returns incidents newer than cutoff, newest first, across all providers.
 func GetRecentIncidents(ctx context.Context, pool *pgxpool.Pool, limit int) ([]models.Incident, error) {
 	rows, err := pool.Query(ctx, `
