@@ -187,12 +187,6 @@ Two workflows:
 
 ---
 
-## AdSense Setup
-
-Replace `ca-pub-REPLACE_WITH_YOUR_ADSENSE_ID` and `REPLACE_SLOT` in all `.html` templates with your actual AdSense publisher ID and slot IDs once approved.
-
----
-
 ## Architecture Notes
 
 ```

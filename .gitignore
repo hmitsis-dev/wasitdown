@@ -1,10 +1,22 @@
+# Environment — never commit secrets
+.env
 
-# grimoire — generated files (do not commit)
+# AI tool personal configs
+.grimoire
 .cursorrules
 .clinerules
-AGENTS.md
-CLAUDE.md
 .aider.conf.yml
 .openrouter-rules
+AGENTS.md
 KNOWLEDGE.md
-.env
+
+# Internal/session documents
+HANDOFF.md
+PROJECT_STATE.md
+SETUP.md
+
+# Local Claude Code settings
+.claude/
+
+# Build output
+dist/

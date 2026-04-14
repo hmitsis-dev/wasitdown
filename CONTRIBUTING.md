@@ -27,7 +27,7 @@ This is the most welcome contribution. Before opening a PR:
 See [Adding a Provider](README.md#adding-a-provider) in the README for the full walkthrough.
 
 **Please include in your PR:**
-- The migration SQL (or confirm it's added to `001_initial.sql`)
+- The migration SQL added as a new file under `db/migrations/`
 - The `AllProviders()` entry
 - A note on what format the status page uses and the correct `status_page_url` for the human-readable page
 
@@ -39,7 +39,6 @@ The static site is built by `cmd/generator` from HTML templates in `templates/`.
 
 - **Each template is isolated.** `base.html` is cloned per page so `{{define "head-extra"}}` and `{{define "content"}}` don't collide across pages. Don't use ParseGlob.
 - **Template functions** are registered in `generator.New()` via `template.FuncMap`. Add new helpers there, not inline in templates.
-- **`ADS_ENABLED`** controls AdSense slots. Wrap any ad markup in `{{if adsEnabled}}...{{end}}`. Never hardcode ad slots outside that guard.
 - After changing a template, rebuild and restart the generator: `docker compose up generator`
 
 ---

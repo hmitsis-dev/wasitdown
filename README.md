@@ -8,7 +8,7 @@ Aggregates incident history from public status pages across major cloud and AI p
 
 ## What it tracks
 
-AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Stripe, Zoom, and more (23 providers total). View incidents by provider, by date, or compare providers side by side.
+AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Groq, Discord, Zoom, and more. View incidents by provider, by date, or compare providers side by side.
 
 ---
 
@@ -22,7 +22,6 @@ AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Stripe,
 - **Date pages** — all incidents on a given day with concurrent-outage grouping
 - **Compare pages** — side-by-side uptime and incident comparison for any two providers
 - **JSON API** — `/api/v1/providers.json`, `/api/v1/recent.json`, `/api/v1/uptime.json`
-- **Ads toggle** — AdSense slots controlled by `ADS_ENABLED` env var; off by default
 
 ---
 
@@ -30,7 +29,7 @@ AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Stripe,
 
 ```
 GitHub Actions (cron)
-  └─ every 15min → scraper → PostgreSQL (Supabase / Neon / Railway)
+  └─ every 15min → scraper → PostgreSQL (Neon / Supabase / Railway)
   └─ every 20min → generator → dist/ → Cloudflare Pages
 ```
 
@@ -47,7 +46,7 @@ All status page polling is outbound HTTP GET only. The site is pure static HTML 
 ```bash
 git clone https://github.com/hmitsis-dev/wasitdown
 cd wasitdown
-cp .env.example .env   # or edit .env directly — defaults work for local dev
+cp .env.example .env   # edit DATABASE_URL to point to your Postgres instance
 ```
 
 ### 2. Start all services
@@ -64,7 +63,7 @@ This starts PostgreSQL, the scraper (daemon mode, polls every 15 min), the gener
 http://localhost:8080
 ```
 
-The generator runs automatically on startup. To regenerate manually after schema or template changes:
+The generator runs automatically on startup. To regenerate manually:
 
 ```bash
 docker compose up generator
@@ -79,13 +78,14 @@ docker compose up generator
 | `OUTPUT_DIR` | `dist` | Generator output directory |
 | `TEMPLATES_DIR` | `templates` | HTML template directory |
 | `STATIC_DIR` | `static` | Static assets directory |
-| `ADS_ENABLED` | `false` | Set to `true` to render AdSense slots |
 
 ---
 
 ## Adding a Provider
 
-1. **Add a DB row** in `db/migrations/001_initial.sql` (or a new migration file):
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full walkthrough. The short version:
+
+1. **Add a DB row** in a new migration file under `db/migrations/`:
 
 ```sql
 INSERT INTO providers (name, slug, status_page_url, api_url, type) VALUES
@@ -94,7 +94,7 @@ INSERT INTO providers (name, slug, status_page_url, api_url, type) VALUES
 ON CONFLICT (slug) DO NOTHING;
 ```
 
-2. **Wire up the scraper** — for standard Atlassian Statuspage providers, add the slug to `AllProviders()` in `internal/scraper/provider.go`:
+2. **Wire up the scraper** — for standard [Atlassian Statuspage](https://www.atlassian.com/software/statuspage) providers, add the slug to `AllProviders()` in `internal/scraper/provider.go`:
 
 ```go
 &StatuspageScraper{slug: "myprovider"},
@@ -116,8 +116,6 @@ For custom formats, implement the `Provider` interface in a new file under `inte
 | `CLOUDFLARE_API_TOKEN` | CF API token with Pages:Edit |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
 
-For production, also set `ADS_ENABLED=true` in your GitHub Actions environment if you want AdSense to render.
-
 Push to `main` — the GitHub Actions workflows handle the rest.
 
 ---
@@ -125,13 +123,17 @@ Push to `main` — the GitHub Actions workflows handle the rest.
 ## Tech Stack
 
 - **Go 1.22+** — scraper + static site generator
-- **PostgreSQL** — incident storage (managed DB recommended)
+- **PostgreSQL** — incident storage (Neon free tier recommended)
 - **Tailwind CSS** (CDN) — styling
 - **nginx** — local static file serving
 - **Cloudflare Pages** — production hosting
 - **GitHub Actions** — cron scheduling
 
 ---
+
+## Contributing
+
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
