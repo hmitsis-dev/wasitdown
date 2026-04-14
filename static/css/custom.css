@@ -5,6 +5,73 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ── Dark mode ─────────────────────────────────────────────────────────────── */
+html.dark body                    { background-color: #0f172a; color: #f1f5f9; }
+html.dark header                  { background-color: #1e293b !important; border-color: #334155 !important; }
+html.dark footer                  { border-color: #334155 !important; color: #94a3b8 !important; }
+html.dark footer a                { color: #94a3b8; }
+html.dark footer a:hover          { color: #818cf8; }
+
+/* Backgrounds */
+html.dark .bg-white               { background-color: #1e293b !important; }
+html.dark .bg-gray-50             { background-color: #0f172a !important; }
+html.dark .bg-gray-100            { background-color: #1e293b !important; }
+html.dark .hover\:bg-gray-50:hover { background-color: #263348 !important; }
+html.dark .hover\:bg-gray-200:hover { background-color: #334155 !important; }
+
+/* Borders */
+html.dark .border-gray-200        { border-color: #334155 !important; }
+html.dark .border-gray-100        { border-color: #1e293b !important; }
+html.dark .divide-gray-100 > * + * { border-color: #1e293b !important; }
+
+/* Text */
+html.dark .text-gray-900          { color: #f1f5f9 !important; }
+html.dark .text-gray-700          { color: #cbd5e1 !important; }
+html.dark .text-gray-600          { color: #94a3b8 !important; }
+html.dark .text-gray-500          { color: #64748b !important; }
+html.dark .text-gray-400          { color: #475569 !important; }
+html.dark .text-gray-300          { color: #334155 !important; }
+
+/* Nav & links */
+html.dark nav .text-gray-500      { color: #94a3b8 !important; }
+html.dark .hover\:text-brand:hover { color: #818cf8 !important; }
+html.dark .group:hover .group-hover\:text-brand { color: #818cf8 !important; }
+
+/* Brand color adjustments for dark */
+html.dark .text-brand             { color: #818cf8 !important; }
+html.dark .bg-brand               { background-color: #4f46e5 !important; }
+html.dark .border-brand           { border-color: #818cf8 !important; }
+
+/* Cards & inputs */
+html.dark input[type="search"],
+html.dark input[type="date"]      { background-color: #1e293b !important; color: #f1f5f9 !important; border-color: #334155 !important; }
+html.dark input::placeholder      { color: #475569 !important; }
+
+/* Tables */
+html.dark thead.bg-gray-50        { background-color: #1e293b !important; }
+html.dark .hover\:bg-gray-50:hover { background-color: #263348 !important; }
+
+/* Active outages section */
+html.dark .bg-red-50              { background-color: #2d1515 !important; }
+html.dark .border-red-200         { border-color: #7f1d1d !important; }
+
+/* Toggle button */
+.dark-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.dark-toggle:hover                { background: #f3f4f6; color: #111827; }
+html.dark .dark-toggle            { color: #94a3b8; }
+html.dark .dark-toggle:hover      { background: #334155 !important; color: #f1f5f9; }
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 /* Timeline connector line */
 .timeline-item:last-child .timeline-line {
   display: none;

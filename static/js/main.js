@@ -3,6 +3,21 @@
 (function () {
   'use strict';
 
+  // --- Dark mode toggle ---
+  var toggleBtn = document.getElementById('dark-toggle');
+  if (toggleBtn) {
+    var html = document.documentElement;
+    function updateIcon() {
+      toggleBtn.textContent = html.classList.contains('dark') ? '☀️' : '🌙';
+    }
+    updateIcon();
+    toggleBtn.addEventListener('click', function () {
+      html.classList.toggle('dark');
+      localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+      updateIcon();
+    });
+  }
+
   // --- Date page navigation ---
   const dateInput = document.getElementById('date-picker');
   if (dateInput) {
