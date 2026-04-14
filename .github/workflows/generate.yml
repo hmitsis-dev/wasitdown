@@ -7,6 +7,10 @@ on:
   # Allow manual trigger
   workflow_dispatch:
 
+permissions:
+  contents: read
+  deployments: write
+
 concurrency:
   group: deploy
   cancel-in-progress: true
