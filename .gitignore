@@ -20,3 +20,6 @@ SETUP.md
 
 # Build output
 dist/
+
+# grimoire — generated files (do not commit)
+CLAUDE.md

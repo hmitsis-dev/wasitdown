@@ -202,6 +202,9 @@ func (g *Generator) Run(ctx context.Context) error {
 	if err := g.generateSitemap(ctx, providers); err != nil {
 		return fmt.Errorf("sitemap: %w", err)
 	}
+	if err := g.generateFeed(ctx); err != nil {
+		return fmt.Errorf("feed: %w", err)
+	}
 
 	slog.Info("site generation complete", "output", g.cfg.OutputDir)
 	return nil
@@ -589,6 +592,86 @@ func (g *Generator) generateSitemap(ctx context.Context, providers []models.Prov
 	if _, err := f.WriteString(xml.Header); err != nil {
 		return err
 	}
+	enc := xml.NewEncoder(f)
+	enc.Indent("", "  ")
+	if err := enc.Encode(out); err != nil {
+		return err
+	}
+	return enc.Close()
+}
+
+// generateFeed writes dist/feed.xml — an Atom feed of the 50 most recent incidents.
+func (g *Generator) generateFeed(ctx context.Context) error {
+	type feedLink struct {
+		Rel  string `xml:"rel,attr,omitempty"`
+		Type string `xml:"type,attr,omitempty"`
+		Href string `xml:"href,attr"`
+	}
+	type feedEntry struct {
+		XMLName   xml.Name   `xml:"entry"`
+		Title     string     `xml:"title"`
+		Link      feedLink   `xml:"link"`
+		ID        string     `xml:"id"`
+		Updated   string     `xml:"updated"`
+		Summary   string     `xml:"summary"`
+	}
+	type feed struct {
+		XMLName  xml.Name    `xml:"feed"`
+		XMLNS    string      `xml:"xmlns,attr"`
+		Title    string      `xml:"title"`
+		Subtitle string      `xml:"subtitle"`
+		Link     []feedLink  `xml:"link"`
+		ID       string      `xml:"id"`
+		Updated  string      `xml:"updated"`
+		Entries  []feedEntry `xml:"entry"`
+	}
+
+	incidents, err := db.GetRecentIncidents(ctx, g.pool, 50)
+	if err != nil {
+		return err
+	}
+
+	entries := make([]feedEntry, 0, len(incidents))
+	for _, inc := range incidents {
+		providerSlug := inc.ProviderSlug
+		url := fmt.Sprintf("%s/incident/%s/%s/", siteDomain, providerSlug, inc.ExternalID)
+		summary := fmt.Sprintf("[%s] %s — impact: %s, status: %s",
+			inc.ProviderName, inc.Title, inc.Impact, inc.Status)
+		entries = append(entries, feedEntry{
+			Title:   fmt.Sprintf("%s: %s", inc.ProviderName, inc.Title),
+			Link:    feedLink{Rel: "alternate", Href: url},
+			ID:      url,
+			Updated: inc.StartedAt.UTC().Format(time.RFC3339),
+			Summary: summary,
+		})
+	}
+
+	updated := time.Now().UTC().Format(time.RFC3339)
+	if len(entries) > 0 {
+		updated = entries[0].Updated
+	}
+
+	out := feed{
+		XMLNS:    "http://www.w3.org/2005/Atom",
+		Title:    "wasitdown.dev — Recent Incidents",
+		Subtitle: "Historical cloud & AI provider incident tracker",
+		Link: []feedLink{
+			{Rel: "self", Type: "application/atom+xml", Href: siteDomain + "/feed.xml"},
+			{Rel: "alternate", Type: "text/html", Href: siteDomain},
+		},
+		ID:      siteDomain + "/feed.xml",
+		Updated: updated,
+		Entries: entries,
+	}
+
+	path := filepath.Join(g.cfg.OutputDir, "feed.xml")
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	f.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	enc := xml.NewEncoder(f)
 	enc.Indent("", "  ")
 	if err := enc.Encode(out); err != nil {
