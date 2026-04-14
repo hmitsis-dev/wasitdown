@@ -44,6 +44,7 @@
 </div>
 
 <!-- Uptime stats cards -->
+<p class="text-xs text-gray-400 mb-3">Uptime reflects any incident across all {{.Provider.Name}} sub-services (major &amp; critical only). Individual service availability is typically higher. <a href="{{.Provider.StatusPageURL}}" target="_blank" rel="noopener noreferrer" class="underline hover:text-brand">Check the live status page</a> for per-service detail.</p>
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
   {{$stats := .Stats30}}
   <div class="bg-white rounded-xl border border-gray-200 p-5">
