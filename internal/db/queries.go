@@ -208,19 +208,33 @@ func GetDistinctIncidentDates(ctx context.Context, pool *pgxpool.Pool) ([]time.T
 }
 
 // GetUptimeStats computes uptime stats for all providers over the given window.
+// Overlapping incidents are merged before summing downtime so that simultaneous
+// regional outages (common for transparent providers like Cloudflare) are not
+// double-counted. Uses PostgreSQL 14+ range_agg on tstzrange.
 func GetUptimeStats(ctx context.Context, pool *pgxpool.Pool, days int) ([]models.UptimeStats, error) {
 	cutoff := time.Now().UTC().AddDate(0, 0, -days)
 	rows, err := pool.Query(ctx, `
-		SELECT p.id, p.slug, p.name,
-		       COUNT(i.id) AS incident_count,
-		       COALESCE(AVG(i.duration_minutes) FILTER (WHERE i.duration_minutes IS NOT NULL), 0) AS avg_dur,
-		       COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY i.duration_minutes) FILTER (WHERE i.duration_minutes IS NOT NULL), 0) AS median_dur,
-		       COALESCE(MAX(i.duration_minutes), 0) AS max_dur,
-		       COALESCE(SUM(i.duration_minutes) FILTER (WHERE i.duration_minutes IS NOT NULL), 0) AS total_outage_min
-		FROM providers p
-		LEFT JOIN incidents i ON i.provider_id = p.id AND i.started_at >= $1
-		GROUP BY p.id, p.slug, p.name
-		ORDER BY p.name`, cutoff)
+		WITH base AS (
+			SELECT p.id, p.slug, p.name,
+			       COUNT(i.id) AS incident_count,
+			       COALESCE(AVG(i.duration_minutes) FILTER (WHERE i.duration_minutes IS NOT NULL), 0) AS avg_dur,
+			       COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY i.duration_minutes)
+			           FILTER (WHERE i.duration_minutes IS NOT NULL), 0) AS median_dur,
+			       COALESCE(MAX(i.duration_minutes), 0) AS max_dur,
+			       range_agg(tstzrange(i.started_at, i.resolved_at))
+			           FILTER (WHERE i.resolved_at IS NOT NULL AND i.resolved_at > i.started_at) AS merged
+			FROM providers p
+			LEFT JOIN incidents i ON i.provider_id = p.id AND i.started_at >= $1
+			GROUP BY p.id, p.slug, p.name
+		)
+		SELECT id, slug, name, incident_count, avg_dur, median_dur, max_dur,
+		       COALESCE(
+		           (SELECT SUM(EXTRACT(EPOCH FROM (upper(r) - lower(r)))/60)
+		            FROM unnest(merged) AS r),
+		           0
+		       ) AS total_outage_min
+		FROM base
+		ORDER BY name`, cutoff)
 	if err != nil {
 		return nil, err
 	}
