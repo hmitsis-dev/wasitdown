@@ -674,7 +674,8 @@ func (g *Generator) generateFeed(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if _, err := f.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n"); err != nil {
+	if _, err := f.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n" +
+		`<?xml-stylesheet type="text/xsl" href="/feed.xsl"?>` + "\n"); err != nil {
 		_ = f.Close()
 		return err
 	}
