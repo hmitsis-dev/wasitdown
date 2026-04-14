@@ -1,5 +1,8 @@
 # wasitdown.dev — Developer & AI Agent Guide
 
+> AI agent guide for this project. Copy to your tool's config file:
+> `cp llms.md CLAUDE.md` (Claude Code) · `cp llms.md AGENTS.md` (OpenAI Codex) · `cp llms.md .cursorrules` (Cursor)
+
 Historical cloud & AI provider incident aggregator. Scrapes public status pages, stores to PostgreSQL, generates a fully static site deployed to Cloudflare Pages.
 
 ---
@@ -107,7 +110,7 @@ ON CONFLICT (slug) DO NOTHING;
 &StatuspageScraper{slug: "myprovider"},
 ```
 
-**Custom format** — implement the `Provider` interface in a new file:
+**Custom format** — implement the `Provider` interface in a new file under `internal/scraper/`:
 
 ```go
 type MyProviderScraper struct{}
@@ -126,21 +129,56 @@ go run ./cmd/generator
 
 ## Database Migrations
 
-Plain SQL files in `db/migrations/`, named `NNN_description.sql`. Applied in filename order on scraper startup via `internal/db/db.go`. Never edit applied migrations — always add new files.
+Plain SQL files in `db/migrations/`, named `NNN_description.sql`. Applied in filename order on scraper startup via `internal/db/db.go`. Tracked in a `schema_migrations` table. Never edit applied migrations — always add new files.
 
 ---
 
 ## Code Conventions
 
-- **Go 1.24+**, stdlib where possible. No ORM — `pgx` directly.
-- **No global state** — all dependencies passed explicitly.
-- **Error handling** — explicit everywhere; no naked `_` ignores.
-- **Context** — use for cancellation and deadlines throughout.
-- **Provider interface** — each scraper is an independent struct. Errors logged to `scrape_log`, never panic.
-- **DB layer** — all queries in `internal/db/queries.go`.
-- **Generator** — idempotent; safe to re-run. Uses `os.Create` (overwrites).
-- **Templates** — `html/template` with a func map registered in `generator.New()`.
-- **Tests** — table-driven.
+### Go
+
+- **Go 1.24+**. Use stdlib where possible; avoid unnecessary dependencies.
+- **No ORM** — use `pgx` directly. All queries in `internal/db/queries.go`.
+- **No global state** — pass all dependencies explicitly (pool, config, logger).
+- **Errors** — handle explicitly everywhere. No naked `_` ignores on error returns.
+  ```go
+  // bad
+  f.Close()
+  // good
+  if err := f.Close(); err != nil { return err }
+  ```
+- **Context** — accept and propagate `context.Context` as the first argument in any function that does I/O or can block.
+- **Interfaces over concrete types** in function signatures — makes testing easier and dependencies explicit.
+- **Deferred Close on response bodies** — `//nolint:errcheck` is acceptable only for `resp.Body.Close()`; for files, always check the close error.
+- **Keep packages small and focused** — one responsibility per package.
+- **Table-driven tests** are the standard pattern.
+
+### SQL
+
+- Migrations are plain SQL, one concern per file, always idempotent (`ON CONFLICT DO NOTHING`, `IF NOT EXISTS`).
+- Never `SELECT *` — name columns explicitly.
+- Use `$1`, `$2` placeholders (pgx style), not `?`.
+- Guard against bad data at the query level (e.g. `resolved_at > started_at` before computing durations).
+
+### Templates
+
+- `html/template` only — never `text/template` for HTML output (XSS risk).
+- All template helper functions registered in `generator.New()` via `template.FuncMap`.
+- Templates receive typed structs, not `map[string]any`.
+
+### Security
+
+- No user input reaches the database — all data is scraped from external APIs, not user-supplied.
+- No server-side runtime at all — the deployed artifact is pure static HTML/CSS/JS.
+- Never commit secrets. Use environment variables and GitHub Secrets.
+- `robots.txt` disallows `/api/` to avoid scraper confusion.
+
+### General
+
+- Readable over clever. If a future reader needs to think twice, rewrite it.
+- Don't add features, refactor, or clean up beyond what was asked.
+- Don't add error handling for scenarios that can't happen.
+- Don't design for hypothetical future requirements.
 
 ---
 

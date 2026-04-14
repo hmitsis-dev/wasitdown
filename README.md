@@ -136,6 +136,8 @@ Push to `main` — the GitHub Actions workflows handle the rest.
 
 PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+**Using an AI agent?** Copy [`llms.md`](llms.md) to your tool's config file — `CLAUDE.md` for Claude Code, `AGENTS.md` for OpenAI Codex, `.cursorrules` for Cursor.
+
 ## License
 
 See [LICENSE](LICENSE).
