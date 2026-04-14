@@ -83,18 +83,23 @@ func LogScrape(ctx context.Context, pool *pgxpool.Pool, providerID int, success 
 	return err
 }
 
-// GetTodayIncidents returns all active (unresolved) incidents plus any incidents
-// that started today (UTC), newest first.
+// GetTodayIncidents returns:
+//   - Unresolved incidents started within the last 7 days (avoids stale "live" entries
+//     from scrapers that never set resolved_at, e.g. AWS)
+//   - Any incident that started today (UTC), resolved or not
+//
+// Active incidents come first, then resolved, both newest-first within each group.
 func GetTodayIncidents(ctx context.Context, pool *pgxpool.Pool) ([]models.Incident, error) {
 	todayUTC := time.Now().UTC().Truncate(24 * time.Hour)
+	staleCutoff := time.Now().UTC().AddDate(0, 0, -7)
 	rows, err := pool.Query(ctx, `
 		SELECT i.id, i.provider_id, p.name, p.slug, i.external_id, i.title, i.impact,
 		       i.status, i.started_at, i.resolved_at, i.duration_minutes, i.created_at
 		FROM incidents i
 		JOIN providers p ON p.id = i.provider_id
-		WHERE i.resolved_at IS NULL
+		WHERE (i.resolved_at IS NULL AND i.started_at >= $2)
 		   OR i.started_at >= $1
-		ORDER BY i.resolved_at NULLS FIRST, i.started_at DESC`, todayUTC)
+		ORDER BY i.resolved_at NULLS FIRST, i.started_at DESC`, todayUTC, staleCutoff)
 	if err != nil {
 		return nil, err
 	}
