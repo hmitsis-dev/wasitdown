@@ -39,41 +39,39 @@ All status page polling is outbound HTTP GET only. The site is pure static HTML 
 
 ## Running Locally
 
-**Prerequisites:** Docker & Docker Compose, Go 1.22+
+**Prerequisites:** Go 1.22+ and either Docker or a free [Neon](https://neon.tech) account.
 
-### 1. Clone and configure
+### Option A — Docker (no external accounts needed)
 
 ```bash
 git clone https://github.com/hmitsis-dev/wasitdown
 cd wasitdown
-cp .env.example .env   # edit DATABASE_URL to point to your Postgres instance
+cp .env.example .env
+docker compose -f docker-compose.local.yml up -d
+# Open http://localhost:8080
 ```
 
-### 2. Start all services
+Starts a local Postgres, scraper, generator, and nginx all in one command.
+
+### Option B — Go + Neon (no Docker needed)
 
 ```bash
-docker compose up -d
+git clone https://github.com/hmitsis-dev/wasitdown
+cd wasitdown
+export DATABASE_URL="your-neon-connection-string"
+go run ./cmd/scraper      # fetch incidents
+go run ./cmd/generator    # build dist/
+cd dist && python3 -m http.server 8080
+# Open http://localhost:8080
 ```
 
-This starts PostgreSQL, the scraper (daemon mode, polls every 15 min), the generator (runs once then exits), and nginx on port 8080.
-
-### 3. Open the site
-
-```
-http://localhost:8080
-```
-
-The generator runs automatically on startup. To regenerate manually:
-
-```bash
-docker compose up generator
-```
+> Use your own free Neon project — never point at the production database.
 
 ### Environment variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `POSTGRES_PASSWORD` | `changeme` | PostgreSQL password |
+| `POSTGRES_PASSWORD` | `changeme` | PostgreSQL password (Docker only) |
 | `DATABASE_URL` | _(local DSN)_ | Full Postgres connection string |
 | `OUTPUT_DIR` | `dist` | Generator output directory |
 | `TEMPLATES_DIR` | `templates` | HTML template directory |

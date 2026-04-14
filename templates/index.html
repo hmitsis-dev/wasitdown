@@ -70,7 +70,7 @@
     {{$s := index $.Stats30 .Slug}}
     <a href="/provider/{{.Slug}}" data-name="{{.Name | lower}}" class="bg-white rounded-xl border border-gray-200 p-4 hover:border-brand hover:shadow-sm transition-all group">
       <div class="font-semibold text-gray-900 group-hover:text-brand truncate">{{.Name}}</div>
-      <div class="mt-2 text-2xl font-bold {{uptimeColor $s.UptimePct}}">{{formatUptime $s.UptimePct}}</div>
+      <div class="mt-2 text-2xl font-bold {{if gt $s.IncidentCount 0}}{{uptimeColor $s.UptimePct}}{{else}}text-gray-300{{end}}">{{if gt $s.IncidentCount 0}}{{formatUptime $s.UptimePct}}{{else}}—{{end}}</div>
       <div class="text-xs text-gray-400 mt-1">30-day uptime</div>
       {{if gt $s.IncidentCount 0}}
       <div class="mt-2 text-xs text-orange-600 font-medium">{{$s.IncidentCount}} incident{{if gt $s.IncidentCount 1}}s{{end}}</div>
@@ -126,9 +126,9 @@ function filterProviders(q) {
           <td class="py-3 px-4">
             <a href="/provider/{{.Slug}}" class="font-medium text-brand hover:underline">{{.Name}}</a>
           </td>
-          <td class="py-3 px-4 text-right font-mono {{uptimeColor $s30.UptimePct}}">{{formatUptime $s30.UptimePct}}</td>
-          <td class="py-3 px-4 text-right font-mono {{uptimeColor $s90.UptimePct}}">{{formatUptime $s90.UptimePct}}</td>
-          <td class="py-3 px-4 text-right font-mono {{uptimeColor $s365.UptimePct}}">{{formatUptime $s365.UptimePct}}</td>
+          <td class="py-3 px-4 text-right font-mono {{if gt $s30.IncidentCount 0}}{{uptimeColor $s30.UptimePct}}{{else}}text-gray-300{{end}}">{{if gt $s30.IncidentCount 0}}{{formatUptime $s30.UptimePct}}{{else}}<span title="No incident data for this period">—</span>{{end}}</td>
+          <td class="py-3 px-4 text-right font-mono {{if gt $s90.IncidentCount 0}}{{uptimeColor $s90.UptimePct}}{{else}}text-gray-300{{end}}">{{if gt $s90.IncidentCount 0}}{{formatUptime $s90.UptimePct}}{{else}}<span title="No incident data for this period">—</span>{{end}}</td>
+          <td class="py-3 px-4 text-right font-mono {{if gt $s365.IncidentCount 0}}{{uptimeColor $s365.UptimePct}}{{else}}text-gray-300{{end}}">{{if gt $s365.IncidentCount 0}}{{formatUptime $s365.UptimePct}}{{else}}<span title="No incident data for this period">—</span>{{end}}</td>
           <td class="py-3 px-4 text-right text-gray-700">{{$s90.IncidentCount}}</td>
           <td class="py-3 px-4 text-right text-gray-500">
             {{if gt $s90.AvgDuration 0.0}}{{roundFloat $s90.AvgDuration}}m{{else}}—{{end}}
