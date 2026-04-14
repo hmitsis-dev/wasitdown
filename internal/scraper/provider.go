@@ -124,37 +124,19 @@ func (s *StatuspageScraper) Scrape(ctx context.Context, pool *pgxpool.Pool, p mo
 // entry here and seed its row in db/migrations/. No other code needed.
 func AllProviders() []Provider {
 	return []Provider{
-		// --- Cloud & AI (original) ---
+		// --- Cloud & AI ---
 		&StatuspageScraper{slug: "anthropic"},
 		&StatuspageScraper{slug: "openai"},
 		&StatuspageScraper{slug: "cloudflare"},
 		&StatuspageScraper{slug: "github"},
 		&StatuspageScraper{slug: "vercel"},
 		&StatuspageScraper{slug: "groq"},
-		&StatuspageScraper{slug: "mistral"},
 		&GCPScraper{},
 		&AzureScraper{},
 		&AWSScraper{},
 
 		// --- Communication & collaboration ---
 		&StatuspageScraper{slug: "discord"},
-		&StatuspageScraper{slug: "slack"},
 		&StatuspageScraper{slug: "zoom"},
-		&TeamsScraper{},
-
-		// --- Social platforms ---
-		&StatuspageScraper{slug: "meta"},     // Instagram / Facebook / WhatsApp / Threads
-		&StatuspageScraper{slug: "twitter"},  // X (Twitter)
-		&StatuspageScraper{slug: "tiktok"},
-		&StatuspageScraper{slug: "snapchat"},
-		&YouTubeScraper{},
-
-		// --- Streaming ---
-		&StatuspageScraper{slug: "spotify"},
-		&NetflixScraper{},
-
-		// --- Payments ---
-		&StatuspageScraper{slug: "paypal"},
-		&StatuspageScraper{slug: "stripe"},
 	}
 }
