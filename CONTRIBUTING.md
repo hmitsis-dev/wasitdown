@@ -7,11 +7,32 @@ Thanks for your interest in contributing. The two most common contributions are 
 ## Getting Started
 
 1. Fork the repo and clone it locally.
-2. Copy `.env` and start the stack: `docker compose up -d`
-3. The site is served at `http://localhost:8080` after the generator runs.
-4. Make your changes, test locally, then open a pull request against `main`.
+2. Choose a local setup option (see below).
+3. Make your changes, test locally, then open a pull request against `main`.
 
-See the [local setup in the README](README.md#running-locally) for full details.
+### Option A — Docker (fully local, no external accounts needed)
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.local.yml up -d
+# Site runs at http://localhost:8080
+```
+
+Spins up a local Postgres, scraper, generator, and nginx — no Neon account needed.
+
+### Option B — Go + Neon (lighter, no Docker needed)
+
+Sign up for a free [Neon](https://neon.tech) account, create a project, then:
+
+```bash
+export DATABASE_URL="your-neon-connection-string"
+go run ./cmd/scraper    # fetch incidents into your DB
+go run ./cmd/generator  # build the site into dist/
+cd dist && python3 -m http.server 8080
+# Site runs at http://localhost:8080
+```
+
+> **Note:** Use your own Neon project — never point `DATABASE_URL` at the production database.
 
 ---
 
