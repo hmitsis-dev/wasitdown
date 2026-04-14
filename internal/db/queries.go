@@ -221,8 +221,13 @@ func GetUptimeStats(ctx context.Context, pool *pgxpool.Pool, days int) ([]models
 			       COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY i.duration_minutes)
 			           FILTER (WHERE i.duration_minutes IS NOT NULL), 0) AS median_dur,
 			       COALESCE(MAX(i.duration_minutes), 0) AS max_dur,
+			       -- Only major/critical incidents count toward downtime.
+			       -- Minor degradations and maintenance (impact=none/minor) are
+			       -- included in incident counts but do not reduce the uptime %.
 			       range_agg(tstzrange(i.started_at, i.resolved_at))
-			           FILTER (WHERE i.resolved_at IS NOT NULL AND i.resolved_at > i.started_at) AS merged
+			           FILTER (WHERE i.resolved_at IS NOT NULL
+			               AND i.resolved_at > i.started_at
+			               AND i.impact IN ('major', 'critical')) AS merged
 			FROM providers p
 			LEFT JOIN incidents i ON i.provider_id = p.id AND i.started_at >= $1
 			GROUP BY p.id, p.slug, p.name
