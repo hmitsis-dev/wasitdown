@@ -1,5 +1,8 @@
 # wasitdown.dev
 
+[![Lint](https://github.com/hmitsis-dev/wasitdown/actions/workflows/lint.yml/badge.svg)](https://github.com/hmitsis-dev/wasitdown/actions/workflows/lint.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > Was it down? Historical cloud & AI provider incident tracker.
 
 Aggregates incident history from public status pages across major cloud and AI providers. A scraper collects data into PostgreSQL, and a generator builds a fully static site deployed to Cloudflare Pages — no server-side runtime.
