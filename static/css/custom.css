@@ -26,6 +26,7 @@ html.dark .divide-gray-100 > * + * { border-color: #1e293b !important; }
 
 /* Text */
 html.dark .text-gray-900          { color: #f1f5f9 !important; }
+html.dark .text-gray-800          { color: #e2e8f0 !important; }
 html.dark .text-gray-700          { color: #cbd5e1 !important; }
 html.dark .text-gray-600          { color: #94a3b8 !important; }
 html.dark .text-gray-500          { color: #64748b !important; }
