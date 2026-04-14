@@ -35,7 +35,7 @@ func httpGet(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, url)
 	}

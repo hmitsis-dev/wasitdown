@@ -587,17 +587,22 @@ func (g *Generator) generateSitemap(ctx context.Context, providers []models.Prov
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	if _, err := f.WriteString(xml.Header); err != nil {
+		_ = f.Close()
 		return err
 	}
 	enc := xml.NewEncoder(f)
 	enc.Indent("", "  ")
 	if err := enc.Encode(out); err != nil {
+		_ = f.Close()
 		return err
 	}
-	return enc.Close()
+	if err := enc.Close(); err != nil {
+		_ = f.Close()
+		return err
+	}
+	return f.Close()
 }
 
 // generateFeed writes dist/feed.xml — an Atom feed of the 50 most recent incidents.
@@ -669,15 +674,21 @@ func (g *Generator) generateFeed(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-
-	f.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+	if _, err := f.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n"); err != nil {
+		_ = f.Close()
+		return err
+	}
 	enc := xml.NewEncoder(f)
 	enc.Indent("", "  ")
 	if err := enc.Encode(out); err != nil {
+		_ = f.Close()
 		return err
 	}
-	return enc.Close()
+	if err := enc.Close(); err != nil {
+		_ = f.Close()
+		return err
+	}
+	return f.Close()
 }
 
 // copyStatic copies the static/ directory tree into dist/ so assets are served.
@@ -713,11 +724,11 @@ func (g *Generator) render(tmplName, outPath string, data any) error {
 	if err != nil {
 		return fmt.Errorf("create %s: %w", outPath, err)
 	}
-	defer f.Close()
 	if err := t.ExecuteTemplate(f, tmplName, data); err != nil {
+		_ = f.Close()
 		return fmt.Errorf("render %s: %w", tmplName, err)
 	}
-	return nil
+	return f.Close()
 }
 
 func writeJSON(path string, v any) error {
