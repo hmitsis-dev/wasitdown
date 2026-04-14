@@ -1,7 +1,7 @@
 # wasitdown.dev
 
 [![Lint](https://github.com/hmitsis-dev/wasitdown/actions/workflows/lint.yml/badge.svg)](https://github.com/hmitsis-dev/wasitdown/actions/workflows/lint.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: GPL-3](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > Was it down? Historical cloud & AI provider incident tracker.
 
