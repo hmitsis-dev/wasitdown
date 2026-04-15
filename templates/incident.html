@@ -12,6 +12,10 @@
   {{end}}
   "description": "{{.Description}}",
   "url": "{{.Canonical}}",
+  "location": {
+    "@type": "VirtualLocation",
+    "url": "{{.Canonical}}"
+  },
   "organizer": {
     "@type": "Organization",
     "name": "{{.Incident.ProviderName}}"
