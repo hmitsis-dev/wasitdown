@@ -8,7 +8,7 @@ Aggregates incident history from public status pages across major cloud and AI p
 
 ## What it tracks
 
-AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Stripe, Zoom, and more (23 providers total). View incidents by provider, by date, or compare providers side by side.
+AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Stripe, Zoom, Discord, Slack, Meta, X (Twitter), TikTok, Snapchat, Spotify, Netflix, PayPal, and more (23 providers total). View incidents by provider, by date, or compare providers side by side.
 
 ---
 
@@ -30,7 +30,7 @@ AWS, Azure, Google Cloud, Anthropic, OpenAI, Cloudflare, GitHub, Vercel, Stripe,
 
 ```
 GitHub Actions (cron)
-  └─ every 15min → scraper → PostgreSQL (Supabase / Neon / Railway)
+  └─ every 15min → scraper → PostgreSQL (Neon / managed DB)
   └─ every 20min → generator → dist/ → Cloudflare Pages
 ```
 
@@ -40,34 +40,53 @@ All status page polling is outbound HTTP GET only. The site is pure static HTML 
 
 ## Running Locally
 
-**Prerequisites:** Docker & Docker Compose, Go 1.22+
+**Prerequisites:** Docker & Docker Compose only. No external database needed — postgres runs in a container.
 
 ### 1. Clone and configure
 
 ```bash
 git clone https://github.com/hmitsis-dev/wasitdown
 cd wasitdown
-cp .env.example .env   # or edit .env directly — defaults work for local dev
+cp .env.example .env   # defaults work as-is for local dev
 ```
 
-### 2. Start all services
+### 2. Start PostgreSQL
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.local.yml up -d postgres
 ```
 
-This starts PostgreSQL, the scraper (daemon mode, polls every 15 min), the generator (runs once then exits), and nginx on port 8080.
-
-### 3. Open the site
-
-```
-http://localhost:8080
-```
-
-The generator runs automatically on startup. To regenerate manually after schema or template changes:
+### 3. Fetch incidents
 
 ```bash
-docker compose up generator
+docker compose -f docker-compose.local.yml run --rm scraper
+```
+
+This applies migrations, seeds all 23 providers, and fetches their incident history. Takes ~30 seconds.
+
+### 4. Generate the site
+
+```bash
+docker compose -f docker-compose.local.yml run --rm generator
+```
+
+### 5. Open the site
+
+```bash
+docker compose -f docker-compose.local.yml up -d web
+# → http://localhost:8080
+```
+
+Or start everything at once and wait ~30s for scraper + generator to finish:
+
+```bash
+docker compose -f docker-compose.local.yml up -d
+```
+
+To regenerate after template changes:
+
+```bash
+docker compose -f docker-compose.local.yml run --rm generator
 ```
 
 ### Environment variables
@@ -75,17 +94,18 @@ docker compose up generator
 | Variable | Default | Description |
 |---|---|---|
 | `POSTGRES_PASSWORD` | `changeme` | PostgreSQL password |
-| `DATABASE_URL` | _(local DSN)_ | Full Postgres connection string |
+| `DATABASE_URL` | _(set by docker-compose)_ | Full Postgres connection string |
 | `OUTPUT_DIR` | `dist` | Generator output directory |
 | `TEMPLATES_DIR` | `templates` | HTML template directory |
 | `STATIC_DIR` | `static` | Static assets directory |
 | `ADS_ENABLED` | `false` | Set to `true` to render AdSense slots |
+| `GA_MEASUREMENT_ID` | _(empty)_ | Set to `G-XXXXXXXXXX` to enable Google Analytics |
 
 ---
 
 ## Adding a Provider
 
-1. **Add a DB row** in `db/migrations/001_initial.sql` (or a new migration file):
+1. **Add a DB row** in a new migration file (e.g. `db/migrations/003_my_provider.sql`):
 
 ```sql
 INSERT INTO providers (name, slug, status_page_url, api_url, type) VALUES
@@ -108,24 +128,24 @@ For custom formats, implement the `Provider` interface in a new file under `inte
 
 ## Deploying
 
+Full walkthrough in [SETUP.md](SETUP.md).
+
 ### GitHub Secrets required
 
 | Secret | Description |
 |---|---|
-| `DATABASE_URL` | Postgres DSN |
+| `DATABASE_URL` | Postgres DSN (e.g. Neon serverless) |
 | `CLOUDFLARE_API_TOKEN` | CF API token with Pages:Edit |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
 
-For production, also set `ADS_ENABLED=true` in your GitHub Actions environment if you want AdSense to render.
-
-Push to `main` — the GitHub Actions workflows handle the rest.
+The GitHub Actions workflows (`.github/workflows/scraper.yml` and `generate.yml`) are commented out by default — uncomment them once your production DB and Cloudflare Pages project are set up.
 
 ---
 
 ## Tech Stack
 
-- **Go 1.22+** — scraper + static site generator
-- **PostgreSQL** — incident storage (managed DB recommended)
+- **Go 1.25** — scraper + static site generator
+- **PostgreSQL 16** — incident storage (Docker locally, managed DB in production)
 - **Tailwind CSS** (CDN) — styling
 - **nginx** — local static file serving
 - **Cloudflare Pages** — production hosting
