@@ -42,7 +42,7 @@ All status page polling is outbound HTTP GET only. The site is pure static HTML 
 
 ## Running Locally
 
-**Prerequisites:** Go 1.22+ and either Docker or a free [Neon](https://neon.tech) account.
+**Prerequisites:** Go 1.25+ and either Docker or a free [Neon](https://neon.tech) account.
 
 ### Option A — Docker (no external accounts needed)
 
@@ -62,9 +62,9 @@ Starts a local Postgres, scraper, generator, and nginx all in one command.
 git clone https://github.com/hmitsis-dev/wasitdown
 cd wasitdown
 export DATABASE_URL="your-neon-connection-string"
-go run ./cmd/scraper      # fetch incidents
-go run ./cmd/generator    # build dist/
-cd dist && python3 -m http.server 8080
+go run ./cmd/scraper      # fetch incidents (Go binary — not Python)
+go run ./cmd/generator    # build dist/   (Go binary — not Python)
+cd dist && python3 -m http.server 8080   # throwaway static preview server
 # Open http://localhost:8080
 ```
 
@@ -79,6 +79,8 @@ cd dist && python3 -m http.server 8080
 | `OUTPUT_DIR` | `dist` | Generator output directory |
 | `TEMPLATES_DIR` | `templates` | HTML template directory |
 | `STATIC_DIR` | `static` | Static assets directory |
+| `ADS_ENABLED` | `false` | Set to `true` to render AdSense slots |
+| `GA_MEASUREMENT_ID` | _(empty)_ | Set to `G-XXXXXXXXXX` to enable Google Analytics |
 
 ---
 
@@ -123,7 +125,7 @@ Push to `main` — the GitHub Actions workflows handle the rest.
 
 ## Tech Stack
 
-- **Go 1.22+** — scraper + static site generator
+- **Go 1.25** — scraper + static site generator
 - **PostgreSQL** — incident storage (Neon free tier recommended)
 - **Tailwind CSS** (CDN) — styling
 - **nginx** — local static file serving
