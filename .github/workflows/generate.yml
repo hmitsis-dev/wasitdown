@@ -1,7 +1,7 @@
 name: Generate & Deploy Static Site
 
 on:
-  # Run every 20 minutes (after scraper has run)
+  # Run every 30 (after scraper has run)
   schedule:
     - cron: "30 * * * *"
   # Allow manual trigger
