@@ -2,8 +2,8 @@ name: Generate & Deploy Static Site
 
 on:
   # Run every 30 (after scraper has run)
-  schedule:
-    - cron: "30 * * * *"
+  #schedule:
+  #  - cron: "30 * * * *"
   # Allow manual trigger
   workflow_dispatch:
 
