@@ -2,8 +2,8 @@ name: Run Scraper
 
 on:
   # Every hour at 20 
-  #schedule:
-    #- cron: "20 * * * *"
+  schedule:
+    - cron: "20 * * * *"  
   workflow_dispatch:
 
 jobs:
