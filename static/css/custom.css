@@ -11,6 +11,7 @@ html.dark header                  { background-color: #1e293b !important; border
 html.dark footer                  { border-color: #334155 !important; color: #94a3b8 !important; }
 html.dark footer a                { color: #94a3b8; }
 html.dark footer a:hover          { color: #818cf8; }
+html.dark .archived-banner        { background-color: #451a03; border-color: #78350f; color: #fde68a; }
 
 /* Backgrounds */
 html.dark .bg-white               { background-color: #1e293b !important; }
