@@ -6,12 +6,12 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-	"strings"
 	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/hmitsis-dev/wasitdown/internal/db"
@@ -84,15 +84,15 @@ func New(pool *pgxpool.Pool, cfg Config) (*Generator, error) {
 		"formatUptime": func(pct float64) string {
 			return fmt.Sprintf("%.3f%%", pct)
 		},
-		"adsEnabled":      func() bool   { return cfg.AdsEnabled },
-		"analyticsID":     func() string { return cfg.GAMeasurementID },
-		"lower":      strings.ToLower,
-		"domain":     func() string { return siteDomain },
-		"now":    func() time.Time { return time.Now().UTC() },
+		"adsEnabled":  func() bool { return cfg.AdsEnabled },
+		"analyticsID": func() string { return cfg.GAMeasurementID },
+		"lower":       strings.ToLower,
+		"domain":      func() string { return siteDomain },
+		"now":         func() time.Time { return time.Now().UTC() },
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s) //nolint:gosec
 		},
-		"sub": func(a, b int) int { return a - b },
+		"sub":        func(a, b int) int { return a - b },
 		"roundFloat": func(f float64) int { return int(math.Round(f)) },
 		"derefTime": func(t *time.Time) time.Time {
 			if t == nil {
@@ -491,6 +491,20 @@ func (g *Generator) generateJSON(
 	if err := writeJSON(filepath.Join(apiDir, "uptime.json"), statsOut); err != nil {
 		return err
 	}
+
+	// The project is archived: tell API consumers the data is no longer updated.
+	status := struct {
+		Archived     bool      `json:"archived"`
+		DataFrozenAt time.Time `json:"data_frozen_at"`
+		Message      string    `json:"message"`
+	}{
+		Archived:     true,
+		DataFrozenAt: time.Now().UTC(),
+		Message:      "wasitdown.dev is archived. Data is frozen and no longer updated.",
+	}
+	if err := writeJSON(filepath.Join(apiDir, "status.json"), status); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -621,12 +635,12 @@ func (g *Generator) generateFeed(ctx context.Context) error {
 		Href string `xml:"href,attr"`
 	}
 	type feedEntry struct {
-		XMLName   xml.Name   `xml:"entry"`
-		Title     string     `xml:"title"`
-		Link      feedLink   `xml:"link"`
-		ID        string     `xml:"id"`
-		Updated   string     `xml:"updated"`
-		Summary   string     `xml:"summary"`
+		XMLName xml.Name `xml:"entry"`
+		Title   string   `xml:"title"`
+		Link    feedLink `xml:"link"`
+		ID      string   `xml:"id"`
+		Updated string   `xml:"updated"`
+		Summary string   `xml:"summary"`
 	}
 	type feed struct {
 		XMLName  xml.Name    `xml:"feed"`

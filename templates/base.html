@@ -75,6 +75,14 @@
     </div>
   </header>
 
+  <div class="archived-banner bg-amber-50 border-b border-amber-200 text-amber-900 text-sm" role="status">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 text-center">
+      <strong>This project is archived.</strong>
+      Data is frozen as of {{formatDateTime .Generated}} and is no longer updated — check providers' official status pages for current status.
+      <a href="https://github.com/hmitsis-dev/wasitdown" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-700">Source on GitHub</a>.
+    </div>
+  </div>
+
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {{block "content" .}}{{end}}
   </main>
@@ -90,6 +98,7 @@
       <a href="/api/v1/recent.json" class="hover:text-brand">JSON API</a> ·
       <a href="/api/v1/providers.json" class="hover:text-brand">Providers</a> ·
       <a href="/api/v1/uptime.json" class="hover:text-brand">Uptime</a> ·
+      <a href="/api/v1/status.json" class="hover:text-brand">Status</a> ·
       <a href="/privacy/" class="hover:text-brand">Privacy</a> ·
       <a href="https://github.com/hmitsis-dev/wasitdown" target="_blank" rel="noopener noreferrer" class="hover:text-brand">Contribute on GitHub</a>
     </p>
