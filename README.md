@@ -3,6 +3,8 @@
 [![Lint](https://github.com/hmitsis-dev/wasitdown/actions/workflows/lint.yml/badge.svg)](https://github.com/hmitsis-dev/wasitdown/actions/workflows/lint.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
+> **📦 Archived (October 2026).** This project is no longer maintained. The database was retired and wasitdown.dev now shows a static archive page. The code is kept as a reference for the architecture: a Go scraper and generator producing a static site on Cloudflare Pages.
+
 > Was it down? Historical cloud & AI provider incident tracker.
 
 Aggregates incident history from public status pages across major cloud and AI providers. A scraper collects data into PostgreSQL, and a generator builds a fully static site deployed to Cloudflare Pages — no server-side runtime.
